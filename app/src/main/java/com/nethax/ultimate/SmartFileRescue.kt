@@ -28,6 +28,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.weight
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -265,7 +267,7 @@ internal fun SmartFileRescueScreen(onBack: () -> Unit) {
                 val result = withContext(Dispatchers.IO) {
                     val target = DocumentFile.fromTreeUri(context, destination)
                         ?: return@withContext Pair(0, 0)
-                    var copied = 0
+                    val completed = mutableListOf<String>()
                     var failed = 0
                     chosen.forEach { item ->
                         val created = target.createFile(item.mime, item.name)
@@ -274,22 +276,26 @@ internal fun SmartFileRescueScreen(onBack: () -> Unit) {
                             )
                         ) {
                             if (movingFiles) {
-                                DocumentFile.fromSingleUri(context, Uri.parse(item.uri))?.delete()
+                                val deleted = DocumentFile.fromSingleUri(
+                                    context, Uri.parse(item.uri)
+                                )?.delete() == true
+                                if (deleted) completed.add(item.uri) else failed++
+                            } else {
+                                completed.add(item.uri)
                             }
-                            copied++
                         } else {
                             created?.delete()
                             failed++
                         }
                     }
-                    Pair(copied, failed)
+                    Pair(completed, failed)
                 }
-                if (movingFiles && result.first > 0) {
-                    val moved = chosen.take(result.first).map { it.uri }.toSet()
+                if (movingFiles && result.first.isNotEmpty()) {
+                    val moved = result.first.toSet()
                     files.removeAll { it.uri in moved }
                     selected.removeAll { it in moved }
                 }
-                status = "Finished: " + result.first + " completed, " + result.second + " failed."
+                status = "Finished: " + result.first.size + " completed, " + result.second + " failed."
                 working = false
             }
         }
