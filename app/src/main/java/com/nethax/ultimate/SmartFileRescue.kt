@@ -29,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.layout.weight
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -266,7 +265,7 @@ internal fun SmartFileRescueScreen(onBack: () -> Unit) {
                 val chosen = files.filter { it.uri in selected }
                 val result = withContext(Dispatchers.IO) {
                     val target = DocumentFile.fromTreeUri(context, destination)
-                        ?: return@withContext Pair(0, 0)
+                        ?: return@withContext Pair(emptyList<String>(), 0)
                     val completed = mutableListOf<String>()
                     var failed = 0
                     chosen.forEach { item ->
