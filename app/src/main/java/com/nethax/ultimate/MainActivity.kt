@@ -104,7 +104,10 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -197,10 +200,15 @@ private fun NethaApp() {
                             onBack = { currentScreen = "home" }
                         )
 
+                        "network" -> NetworkSpeedTestScreen(
+                            onBack = { currentScreen = "home" }
+                        )
+
                         else -> DashboardScreen(
                             onBackground = { currentScreen = "background" },
                             onTranslation = { currentScreen = "translation" },
-                            onOptimizer = { currentScreen = "optimizer" }
+                            onOptimizer = { currentScreen = "optimizer" },
+                            onNetworkSpeed = { currentScreen = "network" }
                         )
                     }
                 }
@@ -411,24 +419,28 @@ private fun AppBackdrop() {
             .background(
                 Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFF0B0A1B),
+                        Color(0xFF100B25),
                         Bg,
-                        Color(0xFF071523)
+                        Color(0xFF061B29),
+                        Color(0xFF090817)
                     ),
                     start = Offset.Zero,
-                    end = Offset(900f, 1800f)
+                    end = Offset(1100f, 1900f)
                 )
             )
     ) {
+        // Soft purple atmosphere.
         Box(
             modifier = Modifier
-                .size(260.dp)
+                .size(310.dp)
                 .align(Alignment.TopStart)
-                .graphicsLayer { alpha = 0.22f }
+                .offset(x = (-95).dp, y = (-105).dp)
+                .graphicsLayer { alpha = 0.28f }
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            Color(0xFF853CFF),
+                            Color(0xFF9B5CFF),
+                            Color(0x553F2A86),
                             Color.Transparent
                         )
                     ),
@@ -436,15 +448,35 @@ private fun AppBackdrop() {
                 )
         )
 
+        // Cyan atmosphere near the bottom.
         Box(
             modifier = Modifier
-                .size(280.dp)
+                .size(340.dp)
                 .align(Alignment.BottomEnd)
-                .graphicsLayer { alpha = 0.20f }
+                .offset(x = 115.dp, y = 105.dp)
+                .graphicsLayer { alpha = 0.25f }
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            Color(0xFF00CFFF),
+                            Color(0xFF00D9FF),
+                            Color(0x44305E9B),
+                            Color.Transparent
+                        )
+                    ),
+                    CircleShape
+                )
+        )
+
+        // A subtle central blue glow.
+        Box(
+            modifier = Modifier
+                .size(230.dp)
+                .align(Alignment.Center)
+                .graphicsLayer { alpha = 0.09f }
+                .background(
+                    Brush.radialGradient(
+                        listOf(
+                            Color(0xFF655BFF),
                             Color.Transparent
                         )
                     ),
@@ -458,7 +490,8 @@ private fun AppBackdrop() {
 private fun DashboardScreen(
     onBackground: () -> Unit,
     onTranslation: () -> Unit,
-    onOptimizer: () -> Unit
+    onOptimizer: () -> Unit,
+    onNetworkSpeed: () -> Unit
 ) {
     var dashboardVisible by remember { mutableStateOf(false) }
 
@@ -597,7 +630,15 @@ private fun DashboardScreen(
                 onClick = onOptimizer
             )
 
-            Spacer(Modifier.weight(1f))
+            FeatureCard(
+                modifier = Modifier.weight(1f),
+                icon = "🌐",
+                title = "Real Network Speed Test",
+                description = "Live Download • Upload • Ping",
+                action = "TEST NETWORK  →",
+                animationDelayMillis = 350L,
+                onClick = onNetworkSpeed
+            )
         }
 
         Text(
@@ -629,6 +670,7 @@ private fun WelcomePanel() {
         label = "welcome-panel-glow"
     )
 
+    // Original animation and timing retained.
     val glowAlpha by glowTransition.animateFloat(
         initialValue = 0.10f,
         targetValue = 0.24f,
@@ -643,22 +685,35 @@ private fun WelcomePanel() {
         modifier = Modifier
             .fillMaxWidth()
             .height(222.dp)
-            .clip(RoundedCornerShape(25.dp))
-            .border(
-                1.dp,
-                Color(0x559D72FF),
-                RoundedCornerShape(25.dp)
+            .shadow(
+                elevation = 22.dp,
+                shape = RoundedCornerShape(25.dp),
+                spotColor = Purple
             )
+            .clip(RoundedCornerShape(25.dp))
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xFF2A1745),
-                        Color(0xFF111E39)
+                        Color(0xFF321B58),
+                        Color(0xFF17284A),
+                        Color(0xFF102C3B)
                     )
                 )
             )
+            .border(
+                width = 1.2.dp,
+                brush = Brush.linearGradient(
+                    listOf(
+                        Color(0xCCB58AFF),
+                        Color(0x8835EAFF),
+                        Color(0x669B5CFF)
+                    )
+                ),
+                shape = RoundedCornerShape(25.dp)
+            )
             .padding(23.dp)
     ) {
+        // Original animated glow layer.
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -666,10 +721,28 @@ private fun WelcomePanel() {
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            Color(0x5535EAFF),
+                            Color(0x8835EAFF),
+                            Color(0x2235EAFF),
                             Color.Transparent
                         )
                     )
+                )
+        )
+
+        // Decorative upper-right lighting.
+        Box(
+            modifier = Modifier
+                .size(145.dp)
+                .align(Alignment.TopEnd)
+                .offset(x = 45.dp, y = (-65).dp)
+                .background(
+                    Brush.radialGradient(
+                        listOf(
+                            Color(0x559B5CFF),
+                            Color.Transparent
+                        )
+                    ),
+                    CircleShape
                 )
         )
 
@@ -680,7 +753,19 @@ private fun WelcomePanel() {
                 .offsetXCompat(50.dp)
                 .border(
                     1.dp,
-                    Color(0x33B58AFF),
+                    Color(0x55B58AFF),
+                    CircleShape
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .size(125.dp)
+                .align(Alignment.CenterEnd)
+                .offsetXCompat(27.dp)
+                .border(
+                    1.dp,
+                    Color(0x4435EAFF),
                     CircleShape
                 )
         )
@@ -688,7 +773,7 @@ private fun WelcomePanel() {
         Column(modifier = Modifier.align(Alignment.CenterStart)) {
             Text(
                 "W E L C O M E",
-                color = Color(0xFFB99AFF),
+                color = Color(0xFFCFB6FF),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 2.8.sp
@@ -716,7 +801,7 @@ private fun WelcomePanel() {
 
             Text(
                 "Your next-level digital experience starts here.",
-                color = Color(0xFFC5C0D8),
+                color = Color(0xFFD0CBE3),
                 fontSize = 11.sp
             )
         }
@@ -742,6 +827,7 @@ private fun FeatureCard(
         entryVisible = true
     }
 
+    // Original entry animations retained.
     val entryAlpha by animateFloatAsState(
         targetValue = if (entryVisible) 1f else 0f,
         animationSpec = tween(380, easing = FastOutSlowInEasing),
@@ -761,9 +847,9 @@ private fun FeatureCard(
     )
 
     val interaction = remember { MutableInteractionSource() }
-
     val pressed by interaction.collectIsPressedAsState()
 
+    // Original tap animation retained.
     val pressScale by animateFloatAsState(
         targetValue = if (pressed) 0.97f else 1f,
         animationSpec = tween(160),
@@ -779,19 +865,31 @@ private fun FeatureCard(
                 alpha = entryAlpha
                 translationY = entryOffset
             }
+            .shadow(
+                elevation = 13.dp,
+                shape = RoundedCornerShape(19.dp),
+                spotColor = Purple
+            )
             .clip(RoundedCornerShape(19.dp))
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xFF21183B),
-                        Color(0xFF102337)
+                        Color(0xFF2A1B49),
+                        Color(0xFF142C43),
+                        Color(0xFF102331)
                     )
                 )
             )
             .border(
-                1.dp,
-                Color(0x669B5CFF),
-                RoundedCornerShape(19.dp)
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    listOf(
+                        Color(0xAAAE82FF),
+                        Color(0x7735EAFF),
+                        Color(0x669B5CFF)
+                    )
+                ),
+                shape = RoundedCornerShape(19.dp)
             )
             .clickable(
                 interactionSource = interaction,
@@ -805,18 +903,24 @@ private fun FeatureCard(
         Box(
             modifier = Modifier
                 .size(43.dp)
+                .shadow(
+                    9.dp,
+                    RoundedCornerShape(13.dp),
+                    spotColor = Cyan
+                )
                 .clip(RoundedCornerShape(13.dp))
                 .background(
                     Brush.linearGradient(
                         listOf(
-                            Color(0x559B5CFF),
-                            Color(0x3335EAFF)
+                            Color(0x889B5CFF),
+                            Color(0x6635EAFF),
+                            Color(0x4435EAFF)
                         )
                     )
                 )
                 .border(
                     1.dp,
-                    Color(0x669B9AFF),
+                    Color(0x889BCAFF),
                     RoundedCornerShape(13.dp)
                 ),
             contentAlignment = Alignment.Center
@@ -828,7 +932,7 @@ private fun FeatureCard(
 
         Text(
             title,
-            color = Color(0xFFDCCBFF),
+            color = Color(0xFFE8DCFF),
             fontSize = 11.sp,
             fontWeight = FontWeight.ExtraBold,
             textAlign = TextAlign.Center,
@@ -841,7 +945,7 @@ private fun FeatureCard(
 
         Text(
             description,
-            color = SoftText,
+            color = Color(0xFFBDBBD0),
             fontSize = 9.sp,
             textAlign = TextAlign.Center,
             maxLines = 1
@@ -865,32 +969,81 @@ private fun ExperiencePanel() {
         modifier = Modifier
             .fillMaxWidth()
             .height(190.dp)
+            .shadow(
+                elevation = 17.dp,
+                shape = RoundedCornerShape(20.dp),
+                spotColor = Cyan
+            )
             .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xFF101D32),
-                        Color(0xFF17102B)
+                        Color(0xFF142C43),
+                        Color(0xFF1B1538),
+                        Color(0xFF101D32)
                     )
                 )
             )
             .border(
-                1.dp,
-                Color(0x4435EAFF),
-                RoundedCornerShape(20.dp)
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    listOf(
+                        Color(0x8835EAFF),
+                        Color(0x779B5CFF),
+                        Color(0x5535EAFF)
+                    )
+                ),
+                shape = RoundedCornerShape(20.dp)
             ),
         contentAlignment = Alignment.Center
     ) {
+        Box(
+            modifier = Modifier
+                .size(180.dp)
+                .align(Alignment.CenterStart)
+                .offset(x = (-95).dp)
+                .background(
+                    Brush.radialGradient(
+                        listOf(
+                            Color(0x4435EAFF),
+                            Color.Transparent
+                        )
+                    ),
+                    CircleShape
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .size(180.dp)
+                .align(Alignment.CenterEnd)
+                .offset(x = 95.dp)
+                .background(
+                    Brush.radialGradient(
+                        listOf(
+                            Color(0x449B5CFF),
+                            Color.Transparent
+                        )
+                    ),
+                    CircleShape
+                )
+        )
+
         Canvas(modifier = Modifier.size(132.dp)) {
             drawCircle(
-                Color(0x5535EAFF),
+                Color(0x7735EAFF),
                 style = Stroke(width = 1.2.dp.toPx())
             )
 
             drawCircle(
-                Color(0x559B5CFF),
+                Color(0x669B5CFF),
                 radius = size.minDimension * 0.36f,
                 style = Stroke(width = 1.2.dp.toPx())
+            )
+
+            drawCircle(
+                Color(0x2235EAFF),
+                radius = size.minDimension * 0.23f
             )
         }
 
@@ -995,19 +1148,31 @@ private fun PanelCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(
+                elevation = 12.dp,
+                shape = RoundedCornerShape(18.dp),
+                spotColor = Purple
+            )
             .clip(RoundedCornerShape(18.dp))
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xF21A1B35),
+                        Color(0xF2222440),
+                        Color(0xF2142639),
                         Color(0xF2112030)
                     )
                 )
             )
             .border(
-                1.dp,
-                PanelBorder,
-                RoundedCornerShape(18.dp)
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    listOf(
+                        Color(0x779B78FF),
+                        Color(0x5535EAFF),
+                        Color(0x665C6FAD)
+                    )
+                ),
+                shape = RoundedCornerShape(18.dp)
             )
             .padding(15.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -1023,9 +1188,9 @@ private fun GradientActionButton(
     onClick: () -> Unit
 ) {
     val interaction = remember { MutableInteractionSource() }
-
     val pressed by interaction.collectIsPressedAsState()
 
+    // Original tap scale and 150 ms timing retained.
     val scale by animateFloatAsState(
         targetValue = if (pressed && enabled) 0.97f else 1f,
         animationSpec = tween(150),
@@ -1039,13 +1204,18 @@ private fun GradientActionButton(
                 scaleX = scale
                 scaleY = scale
             }
+            .shadow(
+                elevation = if (enabled) 13.dp else 2.dp,
+                shape = RoundedCornerShape(12.dp),
+                spotColor = if (enabled) Cyan else Color.Transparent
+            )
             .clip(RoundedCornerShape(12.dp))
             .background(
                 if (enabled) {
                     Brush.linearGradient(
                         listOf(
-                            Color(0xFF9B5CFF),
-                            Color(0xFF397DFF),
+                            Color(0xFFAD65FF),
+                            Color(0xFF5575FF),
                             Color(0xFF00CFFF)
                         )
                     )
@@ -1059,9 +1229,15 @@ private fun GradientActionButton(
                 }
             )
             .border(
-                1.dp,
-                Color(0xAA78D2FF),
-                RoundedCornerShape(12.dp)
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    listOf(
+                        Color(0xCCFFFFFF),
+                        Color(0x667DEBFF),
+                        Color(0x669B5CFF)
+                    )
+                ),
+                shape = RoundedCornerShape(12.dp)
             )
             .clickable(
                 enabled = enabled,
@@ -1099,6 +1275,518 @@ private fun StatusText(
         lineHeight = 16.sp,
         modifier = Modifier.fillMaxWidth()
     )
+}
+
+private data class RealNetworkSpeedResult(
+    val pingMs: Double,
+    val jitterMs: Double,
+    val downloadMbps: Double,
+    val uploadMbps: Double
+)
+
+@Composable
+private fun NetworkMetric(
+    label: String,
+    value: String,
+    unit: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(3.dp)
+    ) {
+        Text(
+            label,
+            color = SoftText,
+            fontSize = 8.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.7.sp,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            value,
+            color = color,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            unit,
+            color = SoftText,
+            fontSize = 8.sp,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun NetworkSpeedTestScreen(onBack: () -> Unit) {
+    val scope = rememberCoroutineScope()
+
+    var isRunning by remember { mutableStateOf(false) }
+    var phase by remember { mutableStateOf("READY TO TEST") }
+    var status by remember {
+        mutableStateOf("Press START REAL SPEED TEST to measure this connection.")
+    }
+    var progress by remember { mutableStateOf(0f) }
+    var liveSpeed by remember { mutableStateOf(0.0) }
+    var pingText by remember { mutableStateOf("--") }
+    var jitterText by remember { mutableStateOf("--") }
+    var downloadText by remember { mutableStateOf("--") }
+    var uploadText by remember { mutableStateOf("--") }
+    var downloadMbps by remember { mutableStateOf<Double?>(null) }
+
+    val gaugeTarget = if (isRunning) {
+        liveSpeed
+    } else {
+        downloadMbps ?: 0.0
+    }
+
+    val gaugeProgress by animateFloatAsState(
+        targetValue = (gaugeTarget / 100.0).toFloat().coerceIn(0f, 1f),
+        animationSpec = tween(260, easing = FastOutSlowInEasing),
+        label = "network-speed-gauge"
+    )
+
+    ToolPage(
+        title = "🌐 REAL NETWORK SPEED TEST",
+        subtitle = "Live internet measurement • Download / Upload / Ping",
+        onBack = onBack
+    ) {
+        PanelCard {
+            Text(
+                "LIVE CONNECTION SPEED",
+                modifier = Modifier.fillMaxWidth(),
+                color = Color(0xFFDCCBFF),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                textAlign = TextAlign.Center
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier.size(164.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val strokeWidth = 10.dp.toPx()
+                        drawCircle(
+                            color = Color(0xFF26304B),
+                            style = Stroke(width = strokeWidth)
+                        )
+                        drawArc(
+                            brush = Brush.sweepGradient(
+                                listOf(Purple, Cyan, Green, Purple)
+                            ),
+                            startAngle = -90f,
+                            sweepAngle = 360f * gaugeProgress,
+                            useCenter = false,
+                            style = Stroke(
+                                width = strokeWidth,
+                                cap = StrokeCap.Round
+                            )
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            when {
+                                isRunning -> String.format("%.1f", liveSpeed)
+                                downloadMbps != null -> String.format("%.1f", downloadMbps)
+                                else -> "--"
+                            },
+                            color = MainText,
+                            fontSize = 31.sp,
+                            fontWeight = FontWeight.Black
+                        )
+                        Text(
+                            "Mbps",
+                            color = Cyan,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            if (isRunning) "LIVE SPEED" else "DOWNLOAD",
+                            color = SoftText,
+                            fontSize = 8.sp,
+                            letterSpacing = 1.sp
+                        )
+                    }
+                }
+            }
+
+            Text(
+                phase,
+                modifier = Modifier.fillMaxWidth(),
+                color = if (phase == "TEST FAILED") Color(0xFFFF879A) else Cyan,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center,
+                letterSpacing = 1.sp
+            )
+
+            if (isRunning) {
+                LinearProgressIndicator(
+                    progress = progress.coerceIn(0f, 1f),
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Cyan,
+                    trackColor = Color(0xFF29304B)
+                )
+            }
+
+            StatusText(
+                status,
+                if (phase == "TEST FAILED") Color(0xFFFF879A) else SoftText
+            )
+        }
+
+        PanelCard {
+            Text(
+                "TEST RESULTS",
+                color = Color(0xFFDCCBFF),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.1.sp
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                NetworkMetric(
+                    label = "PING",
+                    value = pingText,
+                    unit = "ms",
+                    color = Cyan,
+                    modifier = Modifier.weight(1f)
+                )
+                NetworkMetric(
+                    label = "JITTER",
+                    value = jitterText,
+                    unit = "ms",
+                    color = Purple,
+                    modifier = Modifier.weight(1f)
+                )
+                NetworkMetric(
+                    label = "DOWNLOAD",
+                    value = downloadText,
+                    unit = "Mbps",
+                    color = Green,
+                    modifier = Modifier.weight(1f)
+                )
+                NetworkMetric(
+                    label = "UPLOAD",
+                    value = uploadText,
+                    unit = "Mbps",
+                    color = Color(0xFFFFC66D),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        GradientActionButton(
+            text = if (isRunning) "TEST IN PROGRESS..." else "⚡ START REAL SPEED TEST",
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isRunning
+        ) {
+            scope.launch {
+                isRunning = true
+                phase = "PREPARING TEST"
+                status = "Connecting to the nearest available Cloudflare edge..."
+                progress = 0f
+                liveSpeed = 0.0
+                pingText = "--"
+                jitterText = "--"
+                downloadText = "--"
+                uploadText = "--"
+                downloadMbps = null
+
+                try {
+                    val result = runRealNetworkSpeedTest(
+                        onPhase = { nextPhase, nextProgress ->
+                            withContext(Dispatchers.Main) {
+                                phase = nextPhase
+                                progress = nextProgress
+                                status = when (nextPhase) {
+                                    "MEASURING PING" -> "Sampling connection latency..."
+                                    "TESTING DOWNLOAD" -> "Receiving real test data from the speed-test server..."
+                                    "TESTING UPLOAD" -> "Sending test data to the speed-test server..."
+                                    "TEST COMPLETED" -> "All measurements completed successfully."
+                                    else -> nextPhase
+                                }
+                            }
+                        },
+                        onLiveSpeed = { speed, nextProgress ->
+                            withContext(Dispatchers.Main) {
+                                liveSpeed = speed
+                                progress = nextProgress
+                            }
+                        }
+                    )
+
+                    pingText = String.format("%.0f", result.pingMs)
+                    jitterText = String.format("%.0f", result.jitterMs)
+                    downloadText = String.format("%.1f", result.downloadMbps)
+                    uploadText = String.format("%.1f", result.uploadMbps)
+                    downloadMbps = result.downloadMbps
+                    phase = "TEST COMPLETED"
+                    progress = 1f
+                    status = "Real connection test completed. Results are estimates for this server route."
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    phase = "TEST FAILED"
+                    status = error.message ?: "The speed test could not complete. Check your connection and try again."
+                } finally {
+                    isRunning = false
+                    liveSpeed = 0.0
+                }
+            }
+        }
+
+        GradientActionButton(
+            text = "RESET RESULTS",
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isRunning
+        ) {
+            phase = "READY TO TEST"
+            status = "Press START REAL SPEED TEST to measure this connection."
+            progress = 0f
+            liveSpeed = 0.0
+            pingText = "--"
+            jitterText = "--"
+            downloadText = "--"
+            uploadText = "--"
+            downloadMbps = null
+        }
+
+        PanelCard {
+            Text(
+                "HOW THIS TEST WORKS",
+                color = Cyan,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+            Text(
+                "• Uses real HTTPS requests to Cloudflare's speed-test edge.\n" +
+                    "• Measures five latency samples and estimates jitter from their variation.\n" +
+                    "• Measures download and upload throughput using transferred data.\n" +
+                    "• Uses approximately 5 MB of test data per run (4 MB download + 1 MB upload).\n\n" +
+                    "Ping is to the test server, not your Free Fire or other game server. Results can vary with signal strength, congestion, and server distance.",
+                color = SoftText,
+                fontSize = 10.sp,
+                lineHeight = 16.sp
+            )
+        }
+    }
+}
+
+private suspend fun runRealNetworkSpeedTest(
+    onPhase: suspend (String, Float) -> Unit,
+    onLiveSpeed: suspend (Double, Float) -> Unit
+): RealNetworkSpeedResult {
+    val pingSamples = mutableListOf<Long>()
+
+    repeat(5) { index ->
+        onPhase("MEASURING PING", (index / 5f) * 0.20f)
+        pingSamples += measureCloudflarePingSample()
+        onPhase("MEASURING PING", ((index + 1) / 5f) * 0.20f)
+    }
+
+    val averagePing = pingSamples.average()
+    val jitter = if (pingSamples.size > 1) {
+        pingSamples.zipWithNext { first, second -> kotlin.math.abs(second - first).toDouble() }.average()
+    } else {
+        0.0
+    }
+
+    onPhase("TESTING DOWNLOAD", 0.20f)
+    val downloadSpeed = measureCloudflareDownload(4 * 1024 * 1024) { speed, fraction ->
+        onLiveSpeed(speed, 0.20f + fraction * 0.45f)
+    }
+
+    onPhase("TESTING UPLOAD", 0.65f)
+    val uploadSpeed = measureCloudflareUpload(1 * 1024 * 1024) { speed, fraction ->
+        onLiveSpeed(speed, 0.65f + fraction * 0.33f)
+    }
+
+    onPhase("TEST COMPLETED", 1f)
+
+    return RealNetworkSpeedResult(
+        pingMs = averagePing,
+        jitterMs = jitter,
+        downloadMbps = downloadSpeed,
+        uploadMbps = uploadSpeed
+    )
+}
+
+private suspend fun measureCloudflarePingSample(): Long = withContext(Dispatchers.IO) {
+    val url = URL("https://speed.cloudflare.com/__down?bytes=0&n=${UUID.randomUUID()}")
+    val connection = (url.openConnection() as HttpURLConnection)
+
+    try {
+        connection.requestMethod = "GET"
+        connection.connectTimeout = 10_000
+        connection.readTimeout = 10_000
+        connection.useCaches = false
+        connection.setRequestProperty("Cache-Control", "no-cache")
+        connection.setRequestProperty("Accept-Encoding", "identity")
+
+        val startedAt = SystemClock.elapsedRealtime()
+        val responseCode = connection.responseCode
+        if (responseCode !in 200..299) {
+            throw IOException("Latency server returned HTTP $responseCode")
+        }
+
+        connection.inputStream.use { input ->
+            val buffer = ByteArray(256)
+            while (input.read(buffer) != -1) {
+                currentCoroutineContext().ensureActive()
+            }
+        }
+
+        (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(1L)
+    } finally {
+        connection.disconnect()
+    }
+}
+
+private suspend fun measureCloudflareDownload(
+    byteCount: Int,
+    onProgress: suspend (Double, Float) -> Unit
+): Double = withContext(Dispatchers.IO) {
+    val url = URL("https://speed.cloudflare.com/__down?bytes=$byteCount&n=${UUID.randomUUID()}")
+    val connection = (url.openConnection() as HttpURLConnection)
+
+    try {
+        connection.requestMethod = "GET"
+        connection.connectTimeout = 12_000
+        connection.readTimeout = 20_000
+        connection.useCaches = false
+        connection.setRequestProperty("Cache-Control", "no-cache")
+        connection.setRequestProperty("Accept-Encoding", "identity")
+
+        val responseCode = connection.responseCode
+        if (responseCode !in 200..299) {
+            throw IOException("Download server returned HTTP $responseCode")
+        }
+
+        val startedAt = SystemClock.elapsedRealtime()
+        var receivedBytes = 0L
+        var lastUpdateAt = startedAt
+        val buffer = ByteArray(16 * 1024)
+
+        connection.inputStream.use { input ->
+            while (true) {
+                currentCoroutineContext().ensureActive()
+                val read = input.read(buffer)
+                if (read < 0) break
+                receivedBytes += read
+
+                val now = SystemClock.elapsedRealtime()
+                val elapsedMs = (now - startedAt).coerceAtLeast(1L)
+                val speed = receivedBytes * 8.0 / (elapsedMs / 1000.0) / 1_000_000.0
+
+                if (now - lastUpdateAt >= 120L) {
+                    onProgress(speed, (receivedBytes.toFloat() / byteCount).coerceIn(0f, 1f))
+                    lastUpdateAt = now
+                }
+
+                if (now - startedAt > 45_000L) {
+                    throw IOException("Download test timed out. Try again with a stronger connection.")
+                }
+            }
+        }
+
+        if (receivedBytes <= 0L) {
+            throw IOException("The download test returned no data.")
+        }
+
+        val durationMs = (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(1L)
+        val finalSpeed = receivedBytes * 8.0 / (durationMs / 1000.0) / 1_000_000.0
+        onProgress(finalSpeed, 1f)
+        finalSpeed
+    } finally {
+        connection.disconnect()
+    }
+}
+
+private suspend fun measureCloudflareUpload(
+    byteCount: Int,
+    onProgress: suspend (Double, Float) -> Unit
+): Double = withContext(Dispatchers.IO) {
+    val url = URL("https://speed.cloudflare.com/__up?n=${UUID.randomUUID()}")
+    val connection = (url.openConnection() as HttpURLConnection)
+    val payload = ByteArray(byteCount) { index -> ((index * 31 + 17) and 0xFF).toByte() }
+
+    try {
+        connection.requestMethod = "POST"
+        connection.doOutput = true
+        connection.doInput = true
+        connection.connectTimeout = 12_000
+        connection.readTimeout = 20_000
+        connection.useCaches = false
+        connection.setRequestProperty("Content-Type", "application/octet-stream")
+        connection.setRequestProperty("Cache-Control", "no-cache")
+        connection.setRequestProperty("Accept-Encoding", "identity")
+        connection.setFixedLengthStreamingMode(byteCount)
+
+        val startedAt = SystemClock.elapsedRealtime()
+        var sentBytes = 0
+        var lastUpdateAt = startedAt
+        connection.outputStream.use { output ->
+            val chunkSize = 16 * 1024
+            while (sentBytes < payload.size) {
+                currentCoroutineContext().ensureActive()
+                val length = minOf(chunkSize, payload.size - sentBytes)
+                output.write(payload, sentBytes, length)
+                sentBytes += length
+
+                val now = SystemClock.elapsedRealtime()
+                val elapsedMs = (now - startedAt).coerceAtLeast(1L)
+                val speed = sentBytes * 8.0 / (elapsedMs / 1000.0) / 1_000_000.0
+
+                if (now - lastUpdateAt >= 120L) {
+                    onProgress(speed, (sentBytes.toFloat() / byteCount).coerceIn(0f, 1f))
+                    lastUpdateAt = now
+                }
+
+                if (now - startedAt > 45_000L) {
+                    throw IOException("Upload test timed out. Try again with a stronger connection.")
+                }
+            }
+        }
+
+        val responseCode = connection.responseCode
+        if (responseCode !in 200..299) {
+            throw IOException("Upload server returned HTTP $responseCode")
+        }
+        connection.inputStream.use { input ->
+            val buffer = ByteArray(512)
+            while (input.read(buffer) != -1) {
+                currentCoroutineContext().ensureActive()
+            }
+        }
+
+        val durationMs = (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(1L)
+        val finalSpeed = sentBytes * 8.0 / (durationMs / 1000.0) / 1_000_000.0
+        onProgress(finalSpeed, 1f)
+        finalSpeed
+    } finally {
+        connection.disconnect()
+    }
 }
 
 @Composable
