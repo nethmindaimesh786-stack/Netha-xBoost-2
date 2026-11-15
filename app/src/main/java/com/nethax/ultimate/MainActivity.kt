@@ -1,15 +1,20 @@
 package com.nethax.ultimate
 
 import android.Manifest
+import android.app.ActivityManager
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.MediaStore
 import android.provider.OpenableColumns
@@ -39,6 +44,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -88,13 +94,15 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import com.google.mlkit.nl.languageid.LanguageIdentification
@@ -122,9 +130,6 @@ import java.util.UUID
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
-import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.layout.ContentScale
 
 private val Bg = Color(0xFF070713)
 private val Panel = Color(0xFF11182B)
@@ -138,6 +143,7 @@ private val PanelBorder = Color(0x665C6FAD)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         window.statusBarColor = android.graphics.Color.rgb(7, 7, 19)
         window.navigationBarColor = android.graphics.Color.rgb(7, 7, 19)
         window.decorView.systemUiVisibility = 0
@@ -206,11 +212,16 @@ private fun NethaApp() {
                             onBack = { currentScreen = "home" }
                         )
 
+                        "blackbox" -> BlackboxScreen(
+                            onBack = { currentScreen = "home" }
+                        )
+
                         else -> DashboardScreen(
                             onBackground = { currentScreen = "background" },
                             onTranslation = { currentScreen = "translation" },
                             onOptimizer = { currentScreen = "optimizer" },
-                            onNetworkSpeed = { currentScreen = "network" }
+                            onNetworkSpeed = { currentScreen = "network" },
+                            onBlackbox = { currentScreen = "blackbox" }
                         )
                     }
                 }
@@ -279,11 +290,7 @@ private fun NativeSplashScreen() {
                     modifier = Modifier
                         .size(150.dp)
                         .rotate(rotation)
-                        .border(
-                            1.dp,
-                            Color(0x559B76FF),
-                            CircleShape
-                        )
+                        .border(1.dp, Color(0x559B76FF), CircleShape)
                 ) {
                     Box(
                         modifier = Modifier
@@ -303,11 +310,7 @@ private fun NativeSplashScreen() {
                     modifier = Modifier
                         .size(126.dp)
                         .rotate(reverseRotation)
-                        .border(
-                            1.dp,
-                            Color(0x4439CAFF),
-                            CircleShape
-                        )
+                        .border(1.dp, Color(0x4439CAFF), CircleShape)
                 )
 
                 Box(
@@ -431,7 +434,6 @@ private fun AppBackdrop() {
                 )
             )
     ) {
-        // Soft purple atmosphere.
         Box(
             modifier = Modifier
                 .size(310.dp)
@@ -450,7 +452,6 @@ private fun AppBackdrop() {
                 )
         )
 
-        // Cyan atmosphere near the bottom.
         Box(
             modifier = Modifier
                 .size(340.dp)
@@ -469,7 +470,6 @@ private fun AppBackdrop() {
                 )
         )
 
-        // A subtle central blue glow.
         Box(
             modifier = Modifier
                 .size(230.dp)
@@ -493,7 +493,8 @@ private fun DashboardScreen(
     onBackground: () -> Unit,
     onTranslation: () -> Unit,
     onOptimizer: () -> Unit,
-    onNetworkSpeed: () -> Unit
+    onNetworkSpeed: () -> Unit,
+    onBlackbox: () -> Unit
 ) {
     var dashboardVisible by remember { mutableStateOf(false) }
 
@@ -521,61 +522,60 @@ private fun DashboardScreen(
                 translationY = dashboardOffset
             }
             .verticalScroll(rememberScrollState())
-.padding(
-    start = 19.dp,
-    end = 19.dp,
-    top = 32.dp,
-    bottom = 22.dp
-),
+            .padding(
+                start = 19.dp,
+                end = 19.dp,
+                top = 32.dp,
+                bottom = 22.dp
+            ),
         verticalArrangement = Arrangement.spacedBy(22.dp)
     ) {
         Row(
-    modifier = Modifier.fillMaxWidth(),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.SpaceBetween
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(R.drawable.netha_logo),
+                    contentDescription = "NETHA X ULTIMATE Logo",
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(RoundedCornerShape(14.dp)),
+                    contentScale = ContentScale.Fit
+                )
 
-        Image(
-            painter = painterResource(R.drawable.netha_logo),
-            contentDescription = "NETHA X ULTIMATE Logo",
-            modifier = Modifier
-                .size(46.dp)
-                .clip(RoundedCornerShape(14.dp)),
-            contentScale = ContentScale.Fit
-        )
+                Spacer(Modifier.width(11.dp))
 
-        Spacer(Modifier.width(11.dp))
+                Column {
+                    Text(
+                        "NETHA X",
+                        color = MainText,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.2.sp
+                    )
 
-        Column {
-            Text(
-                "NETHA X",
-                color = MainText,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 1.2.sp
-            )
+                    Text(
+                        "U L T I M A T E",
+                        color = Color(0xFFAAA3C7),
+                        fontSize = 9.sp,
+                        letterSpacing = 2.3.sp
+                    )
+                }
+            }
 
-            Text(
-                "U L T I M A T E",
-                color = Color(0xFFAAA3C7),
-                fontSize = 9.sp,
-                letterSpacing = 2.3.sp
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .shadow(
+                        8.dp,
+                        CircleShape,
+                        spotColor = Green
+                    )
+                    .background(Green, CircleShape)
             )
         }
-    }
-
-    Box(
-        modifier = Modifier
-            .size(10.dp)
-            .shadow(
-                8.dp,
-                CircleShape,
-                spotColor = Green
-            )
-            .background(Green, CircleShape)
-    )
-}
 
         WelcomePanel()
 
@@ -613,9 +613,9 @@ private fun DashboardScreen(
         }
 
         Row(
-    modifier = Modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.spacedBy(12.dp)
-) {
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             FeatureCard(
                 modifier = Modifier.weight(1f),
                 icon = "⚡",
@@ -635,6 +635,23 @@ private fun DashboardScreen(
                 animationDelayMillis = 350L,
                 onClick = onNetworkSpeed
             )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            FeatureCard(
+                modifier = Modifier.weight(1f),
+                icon = "🕵️",
+                title = "NETHA X BLACKBOX",
+                description = "Smart Performance Detective",
+                action = "ANALYZE DEVICE  →",
+                animationDelayMillis = 440L,
+                onClick = onBlackbox
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
         }
 
         Text(
@@ -666,7 +683,6 @@ private fun WelcomePanel() {
         label = "welcome-panel-glow"
     )
 
-    // Original animation and timing retained.
     val glowAlpha by glowTransition.animateFloat(
         initialValue = 0.10f,
         targetValue = 0.24f,
@@ -709,7 +725,6 @@ private fun WelcomePanel() {
             )
             .padding(23.dp)
     ) {
-        // Original animated glow layer.
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -725,7 +740,6 @@ private fun WelcomePanel() {
                 )
         )
 
-        // Decorative upper-right lighting.
         Box(
             modifier = Modifier
                 .size(145.dp)
@@ -747,11 +761,7 @@ private fun WelcomePanel() {
                 .size(170.dp)
                 .align(Alignment.CenterEnd)
                 .offsetXCompat(50.dp)
-                .border(
-                    1.dp,
-                    Color(0x55B58AFF),
-                    CircleShape
-                )
+                .border(1.dp, Color(0x55B58AFF), CircleShape)
         )
 
         Box(
@@ -759,11 +769,7 @@ private fun WelcomePanel() {
                 .size(125.dp)
                 .align(Alignment.CenterEnd)
                 .offsetXCompat(27.dp)
-                .border(
-                    1.dp,
-                    Color(0x4435EAFF),
-                    CircleShape
-                )
+                .border(1.dp, Color(0x4435EAFF), CircleShape)
         )
 
         Column(modifier = Modifier.align(Alignment.CenterStart)) {
@@ -823,7 +829,6 @@ private fun FeatureCard(
         entryVisible = true
     }
 
-    // Original entry animations retained.
     val entryAlpha by animateFloatAsState(
         targetValue = if (entryVisible) 1f else 0f,
         animationSpec = tween(380, easing = FastOutSlowInEasing),
@@ -845,7 +850,6 @@ private fun FeatureCard(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
 
-    // Original tap animation retained.
     val pressScale by animateFloatAsState(
         targetValue = if (pressed) 0.97f else 1f,
         animationSpec = tween(160),
@@ -862,7 +866,7 @@ private fun FeatureCard(
                 translationY = entryOffset
             }
             .clip(RoundedCornerShape(19.dp))
-.background(Color(0xFF172536))
+            .background(Color(0xFF172536))
             .border(
                 width = 1.dp,
                 brush = Brush.linearGradient(
@@ -886,8 +890,8 @@ private fun FeatureCard(
         Box(
             modifier = Modifier
                 .size(43.dp)
-.clip(RoundedCornerShape(13.dp))
-.background(Color(0xFF21445A))
+                .clip(RoundedCornerShape(13.dp))
+                .background(Color(0xFF21445A))
                 .border(
                     1.dp,
                     Color(0x889BCAFF),
@@ -1059,7 +1063,7 @@ private fun ToolPage(
                 alpha = pageAlpha
                 translationY = pageOffset
             }
-            
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp, vertical = 18.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -1106,11 +1110,6 @@ private fun ToolPage(
     }
 }
 
-/*
- * FIXED:
- * ColumnScope receiver added to the content parameter.
- * This allows Modifier.align() inside PanelCard content.
- */
 @Composable
 private fun PanelCard(
     content: @Composable ColumnScope.() -> Unit
@@ -1160,7 +1159,6 @@ private fun GradientActionButton(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
 
-    // Original tap scale and 150 ms timing retained.
     val scale by animateFloatAsState(
         targetValue = if (pressed && enabled) 0.97f else 1f,
         animationSpec = tween(150),
@@ -1215,10 +1213,7 @@ private fun GradientActionButton(
                 indication = null,
                 onClick = onClick
             )
-            .padding(
-                horizontal = 17.dp,
-                vertical = 10.dp
-            ),
+            .padding(horizontal = 17.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -1275,6 +1270,7 @@ private fun NetworkMetric(
             letterSpacing = 0.7.sp,
             textAlign = TextAlign.Center
         )
+
         Text(
             value,
             color = color,
@@ -1284,6 +1280,7 @@ private fun NetworkMetric(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
+
         Text(
             unit,
             color = SoftText,
@@ -1350,10 +1347,12 @@ private fun NetworkSpeedTestScreen(onBack: () -> Unit) {
                 ) {
                     Canvas(modifier = Modifier.fillMaxSize()) {
                         val strokeWidth = 10.dp.toPx()
+
                         drawCircle(
                             color = Color(0xFF26304B),
                             style = Stroke(width = strokeWidth)
                         )
+
                         drawArc(
                             brush = Brush.sweepGradient(
                                 listOf(Purple, Cyan, Green, Purple)
@@ -1379,12 +1378,14 @@ private fun NetworkSpeedTestScreen(onBack: () -> Unit) {
                             fontSize = 31.sp,
                             fontWeight = FontWeight.Black
                         )
+
                         Text(
                             "Mbps",
                             color = Cyan,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
+
                         Text(
                             if (isRunning) "LIVE SPEED" else "DOWNLOAD",
                             color = SoftText,
@@ -1398,7 +1399,11 @@ private fun NetworkSpeedTestScreen(onBack: () -> Unit) {
             Text(
                 phase,
                 modifier = Modifier.fillMaxWidth(),
-                color = if (phase == "TEST FAILED") Color(0xFFFF879A) else Cyan,
+                color = if (phase == "TEST FAILED") {
+                    Color(0xFFFF879A)
+                } else {
+                    Cyan
+                },
                 fontSize = 12.sp,
                 fontWeight = FontWeight.ExtraBold,
                 textAlign = TextAlign.Center,
@@ -1441,6 +1446,7 @@ private fun NetworkSpeedTestScreen(onBack: () -> Unit) {
                     color = Cyan,
                     modifier = Modifier.weight(1f)
                 )
+
                 NetworkMetric(
                     label = "JITTER",
                     value = jitterText,
@@ -1448,6 +1454,7 @@ private fun NetworkSpeedTestScreen(onBack: () -> Unit) {
                     color = Purple,
                     modifier = Modifier.weight(1f)
                 )
+
                 NetworkMetric(
                     label = "DOWNLOAD",
                     value = downloadText,
@@ -1455,6 +1462,7 @@ private fun NetworkSpeedTestScreen(onBack: () -> Unit) {
                     color = Green,
                     modifier = Modifier.weight(1f)
                 )
+
                 NetworkMetric(
                     label = "UPLOAD",
                     value = uploadText,
@@ -1517,7 +1525,8 @@ private fun NetworkSpeedTestScreen(onBack: () -> Unit) {
                     throw cancelled
                 } catch (error: Exception) {
                     phase = "TEST FAILED"
-                    status = error.message ?: "The speed test could not complete. Check your connection and try again."
+                    status = error.message
+                        ?: "The speed test could not complete. Check your connection and try again."
                 } finally {
                     isRunning = false
                     liveSpeed = 0.0
@@ -1549,6 +1558,7 @@ private fun NetworkSpeedTestScreen(onBack: () -> Unit) {
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp
             )
+
             Text(
                 "• Uses real HTTPS requests to Cloudflare's speed-test edge.\n" +
                     "• Measures five latency samples and estimates jitter from their variation.\n" +
@@ -1576,19 +1586,26 @@ private suspend fun runRealNetworkSpeedTest(
     }
 
     val averagePing = pingSamples.average()
+
     val jitter = if (pingSamples.size > 1) {
-        pingSamples.zipWithNext { first, second -> kotlin.math.abs(second - first).toDouble() }.average()
+        pingSamples.zipWithNext { first, second ->
+            kotlin.math.abs(second - first).toDouble()
+        }.average()
     } else {
         0.0
     }
 
     onPhase("TESTING DOWNLOAD", 0.20f)
-    val downloadSpeed = measureCloudflareDownload(4 * 1024 * 1024) { speed, fraction ->
+
+    val downloadSpeed = measureCloudflareDownload(4 * 1024 * 1024) {
+            speed, fraction ->
         onLiveSpeed(speed, 0.20f + fraction * 0.45f)
     }
 
     onPhase("TESTING UPLOAD", 0.65f)
-    val uploadSpeed = measureCloudflareUpload(1 * 1024 * 1024) { speed, fraction ->
+
+    val uploadSpeed = measureCloudflareUpload(1 * 1024 * 1024) {
+            speed, fraction ->
         onLiveSpeed(speed, 0.65f + fraction * 0.33f)
     }
 
@@ -1602,43 +1619,52 @@ private suspend fun runRealNetworkSpeedTest(
     )
 }
 
-private suspend fun measureCloudflarePingSample(): Long = withContext(Dispatchers.IO) {
-    val url = URL("https://speed.cloudflare.com/__down?bytes=0&n=${UUID.randomUUID()}")
-    val connection = (url.openConnection() as HttpURLConnection)
+private suspend fun measureCloudflarePingSample(): Long =
+    withContext(Dispatchers.IO) {
+        val url = URL(
+            "https://speed.cloudflare.com/__down?bytes=0&n=${UUID.randomUUID()}"
+        )
 
-    try {
-        connection.requestMethod = "GET"
-        connection.connectTimeout = 10_000
-        connection.readTimeout = 10_000
-        connection.useCaches = false
-        connection.setRequestProperty("Cache-Control", "no-cache")
-        connection.setRequestProperty("Accept-Encoding", "identity")
+        val connection = url.openConnection() as HttpURLConnection
 
-        val startedAt = SystemClock.elapsedRealtime()
-        val responseCode = connection.responseCode
-        if (responseCode !in 200..299) {
-            throw IOException("Latency server returned HTTP $responseCode")
-        }
+        try {
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 10_000
+            connection.readTimeout = 10_000
+            connection.useCaches = false
+            connection.setRequestProperty("Cache-Control", "no-cache")
+            connection.setRequestProperty("Accept-Encoding", "identity")
 
-        connection.inputStream.use { input ->
-            val buffer = ByteArray(256)
-            while (input.read(buffer) != -1) {
-                currentCoroutineContext().ensureActive()
+            val startedAt = SystemClock.elapsedRealtime()
+            val responseCode = connection.responseCode
+
+            if (responseCode !in 200..299) {
+                throw IOException("Latency server returned HTTP $responseCode")
             }
-        }
 
-        (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(1L)
-    } finally {
-        connection.disconnect()
+            connection.inputStream.use { input ->
+                val buffer = ByteArray(256)
+
+                while (input.read(buffer) != -1) {
+                    currentCoroutineContext().ensureActive()
+                }
+            }
+
+            (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(1L)
+        } finally {
+            connection.disconnect()
+        }
     }
-}
 
 private suspend fun measureCloudflareDownload(
     byteCount: Int,
     onProgress: suspend (Double, Float) -> Unit
 ): Double = withContext(Dispatchers.IO) {
-    val url = URL("https://speed.cloudflare.com/__down?bytes=$byteCount&n=${UUID.randomUUID()}")
-    val connection = (url.openConnection() as HttpURLConnection)
+    val url = URL(
+        "https://speed.cloudflare.com/__down?bytes=$byteCount&n=${UUID.randomUUID()}"
+    )
+
+    val connection = url.openConnection() as HttpURLConnection
 
     try {
         connection.requestMethod = "GET"
@@ -1649,6 +1675,7 @@ private suspend fun measureCloudflareDownload(
         connection.setRequestProperty("Accept-Encoding", "identity")
 
         val responseCode = connection.responseCode
+
         if (responseCode !in 200..299) {
             throw IOException("Download server returned HTTP $responseCode")
         }
@@ -1661,21 +1688,30 @@ private suspend fun measureCloudflareDownload(
         connection.inputStream.use { input ->
             while (true) {
                 currentCoroutineContext().ensureActive()
+
                 val read = input.read(buffer)
                 if (read < 0) break
+
                 receivedBytes += read
 
                 val now = SystemClock.elapsedRealtime()
                 val elapsedMs = (now - startedAt).coerceAtLeast(1L)
-                val speed = receivedBytes * 8.0 / (elapsedMs / 1000.0) / 1_000_000.0
+
+                val speed = receivedBytes * 8.0 /
+                    (elapsedMs / 1000.0) / 1_000_000.0
 
                 if (now - lastUpdateAt >= 120L) {
-                    onProgress(speed, (receivedBytes.toFloat() / byteCount).coerceIn(0f, 1f))
+                    onProgress(
+                        speed,
+                        (receivedBytes.toFloat() / byteCount).coerceIn(0f, 1f)
+                    )
                     lastUpdateAt = now
                 }
 
                 if (now - startedAt > 45_000L) {
-                    throw IOException("Download test timed out. Try again with a stronger connection.")
+                    throw IOException(
+                        "Download test timed out. Try again with a stronger connection."
+                    )
                 }
             }
         }
@@ -1684,8 +1720,12 @@ private suspend fun measureCloudflareDownload(
             throw IOException("The download test returned no data.")
         }
 
-        val durationMs = (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(1L)
-        val finalSpeed = receivedBytes * 8.0 / (durationMs / 1000.0) / 1_000_000.0
+        val durationMs =
+            (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(1L)
+
+        val finalSpeed = receivedBytes * 8.0 /
+            (durationMs / 1000.0) / 1_000_000.0
+
         onProgress(finalSpeed, 1f)
         finalSpeed
     } finally {
@@ -1697,9 +1737,15 @@ private suspend fun measureCloudflareUpload(
     byteCount: Int,
     onProgress: suspend (Double, Float) -> Unit
 ): Double = withContext(Dispatchers.IO) {
-    val url = URL("https://speed.cloudflare.com/__up?n=${UUID.randomUUID()}")
-    val connection = (url.openConnection() as HttpURLConnection)
-    val payload = ByteArray(byteCount) { index -> ((index * 31 + 17) and 0xFF).toByte() }
+    val url = URL(
+        "https://speed.cloudflare.com/__up?n=${UUID.randomUUID()}"
+    )
+
+    val connection = url.openConnection() as HttpURLConnection
+
+    val payload = ByteArray(byteCount) {
+        index -> ((index * 31 + 17) and 0xFF).toByte()
+    }
 
     try {
         connection.requestMethod = "POST"
@@ -1708,7 +1754,10 @@ private suspend fun measureCloudflareUpload(
         connection.connectTimeout = 12_000
         connection.readTimeout = 20_000
         connection.useCaches = false
-        connection.setRequestProperty("Content-Type", "application/octet-stream")
+        connection.setRequestProperty(
+            "Content-Type",
+            "application/octet-stream"
+        )
         connection.setRequestProperty("Cache-Control", "no-cache")
         connection.setRequestProperty("Accept-Encoding", "identity")
         connection.setFixedLengthStreamingMode(byteCount)
@@ -1716,49 +1765,66 @@ private suspend fun measureCloudflareUpload(
         val startedAt = SystemClock.elapsedRealtime()
         var sentBytes = 0
         var lastUpdateAt = startedAt
+
         connection.outputStream.use { output ->
             val chunkSize = 16 * 1024
+
             while (sentBytes < payload.size) {
                 currentCoroutineContext().ensureActive()
+
                 val length = minOf(chunkSize, payload.size - sentBytes)
+
                 output.write(payload, sentBytes, length)
                 sentBytes += length
 
                 val now = SystemClock.elapsedRealtime()
                 val elapsedMs = (now - startedAt).coerceAtLeast(1L)
-                val speed = sentBytes * 8.0 / (elapsedMs / 1000.0) / 1_000_000.0
+
+                val speed = sentBytes * 8.0 /
+                    (elapsedMs / 1000.0) / 1_000_000.0
 
                 if (now - lastUpdateAt >= 120L) {
-                    onProgress(speed, (sentBytes.toFloat() / byteCount).coerceIn(0f, 1f))
+                    onProgress(
+                        speed,
+                        (sentBytes.toFloat() / byteCount).coerceIn(0f, 1f)
+                    )
                     lastUpdateAt = now
                 }
 
                 if (now - startedAt > 45_000L) {
-                    throw IOException("Upload test timed out. Try again with a stronger connection.")
+                    throw IOException(
+                        "Upload test timed out. Try again with a stronger connection."
+                    )
                 }
             }
         }
 
         val responseCode = connection.responseCode
+
         if (responseCode !in 200..299) {
             throw IOException("Upload server returned HTTP $responseCode")
         }
+
         connection.inputStream.use { input ->
             val buffer = ByteArray(512)
+
             while (input.read(buffer) != -1) {
                 currentCoroutineContext().ensureActive()
             }
         }
 
-        val durationMs = (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(1L)
-        val finalSpeed = sentBytes * 8.0 / (durationMs / 1000.0) / 1_000_000.0
+        val durationMs =
+            (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(1L)
+
+        val finalSpeed = sentBytes * 8.0 /
+            (durationMs / 1000.0) / 1_000_000.0
+
         onProgress(finalSpeed, 1f)
         finalSpeed
     } finally {
         connection.disconnect()
     }
 }
-
 @Composable
 private fun BackgroundRemoverScreen(onBack: () -> Unit) {
     val context = LocalContext.current
@@ -2375,11 +2441,8 @@ private fun TranslationCameraScreen(onBack: () -> Unit) {
             disposed = true
 
             imageAnalysis?.clearAnalyzer()
-
             cameraProvider?.unbindAll()
-
             textAnalyzer?.close()
-
             cameraExecutor.shutdown()
         }
     }
@@ -2528,11 +2591,9 @@ private class TextFrameAnalyzer(
     private val translationExecutor =
         Executors.newSingleThreadExecutor()
 
-    private val mainHandler =
-        Handler(Looper.getMainLooper())
+    private val mainHandler = Handler(Looper.getMainLooper())
 
-    private val processing =
-        AtomicBoolean(false)
+    private val processing = AtomicBoolean(false)
 
     @Volatile
     private var lastFrameAt = 0L
@@ -2765,18 +2826,10 @@ private class TextFrameAnalyzer(
             if (!isClosed) onStatus(value)
         }
 
-    /*
-     * FIXED:
-     * ImageAnalysis.Analyzer does not declare close().
-     * This is a normal cleanup function called from DisposableEffect.
-     */
     fun close() {
         isClosed = true
-
         recognizer.close()
-
         languageIdentifier.close()
-
         translationExecutor.shutdownNow()
     }
 }
@@ -3040,7 +3093,9 @@ private fun MobileOptimizerScreen(onBack: () -> Unit) {
             )
 
             Text(
-                "• Removes temporary cache files belonging to NETHA X ULTIMATE.\n• Does not delete your photos, documents, or personal files.\n• Android does not allow ordinary apps to silently clear other apps' private caches.",
+                "• Removes temporary cache files belonging to NETHA X ULTIMATE.\n" +
+                    "• Does not delete your photos, documents, or personal files.\n" +
+                    "• Android does not allow ordinary apps to silently clear other apps' private caches.",
                 color = SoftText,
                 fontSize = 11.sp,
                 lineHeight = 18.sp
@@ -3113,10 +3168,635 @@ private fun formatBytes(value: Long): String {
 
 private fun Modifier.offsetXCompat(
     value: androidx.compose.ui.unit.Dp
-): Modifier =
-    this.offset(x = value)
+): Modifier = this.offset(x = value)
 
 private fun Modifier.heightInCompat(
     value: androidx.compose.ui.unit.Dp
-): Modifier =
-    this.height(value)
+): Modifier = this.height(value)
+
+
+// ------------------------------------------------------------
+// NETHA X BLACKBOX — SMART PERFORMANCE DETECTIVE
+// ------------------------------------------------------------
+
+private data class BlackboxSample(
+    val elapsedSeconds: Long,
+    val availableRamMb: Long,
+    val totalRamMb: Long,
+    val thermalLabel: String,
+    val thermalLevel: Int,
+    val networkLabel: String
+)
+
+private data class BlackboxLagMarker(
+    val elapsedSeconds: Long,
+    val sample: BlackboxSample
+)
+
+private fun readBlackboxSample(
+    context: Context,
+    elapsedSeconds: Long
+): BlackboxSample {
+    val activityManager =
+        context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+
+    val memoryInfo = ActivityManager.MemoryInfo()
+    activityManager.getMemoryInfo(memoryInfo)
+
+    val availableRamMb =
+        (memoryInfo.availMem / (1024L * 1024L)).coerceAtLeast(0L)
+
+    val totalRamMb =
+        (memoryInfo.totalMem / (1024L * 1024L)).coerceAtLeast(0L)
+
+    var thermalLabel = "NOT AVAILABLE"
+    var thermalLevel = 0
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        try {
+            val powerManager =
+                context.getSystemService(Context.POWER_SERVICE) as PowerManager
+
+            thermalLevel = powerManager.currentThermalStatus
+
+            thermalLabel = when (thermalLevel) {
+                PowerManager.THERMAL_STATUS_NONE -> "NORMAL"
+                PowerManager.THERMAL_STATUS_LIGHT -> "LIGHT"
+                PowerManager.THERMAL_STATUS_MODERATE -> "MODERATE"
+                PowerManager.THERMAL_STATUS_SEVERE -> "SEVERE"
+                PowerManager.THERMAL_STATUS_CRITICAL -> "CRITICAL"
+                PowerManager.THERMAL_STATUS_EMERGENCY -> "EMERGENCY"
+                PowerManager.THERMAL_STATUS_SHUTDOWN -> "SHUTDOWN"
+                else -> "UNKNOWN"
+            }
+        } catch (_: Exception) {
+            thermalLabel = "NOT AVAILABLE"
+            thermalLevel = 0
+        }
+    }
+
+    val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE)
+            as ConnectivityManager
+
+    val networkLabel = try {
+        val activeNetwork = connectivityManager.activeNetwork
+
+        if (activeNetwork == null) {
+            "DISCONNECTED"
+        } else {
+            val capabilities =
+                connectivityManager.getNetworkCapabilities(activeNetwork)
+
+            if (capabilities == null) {
+                "UNKNOWN"
+            } else {
+                val hasInternet =
+                    capabilities.hasCapability(
+                        NetworkCapabilities.NET_CAPABILITY_INTERNET
+                    )
+
+                val validated =
+                    capabilities.hasCapability(
+                        NetworkCapabilities.NET_CAPABILITY_VALIDATED
+                    )
+
+                val transport = when {
+                    capabilities.hasTransport(
+                        NetworkCapabilities.TRANSPORT_WIFI
+                    ) -> "Wi-Fi"
+
+                    capabilities.hasTransport(
+                        NetworkCapabilities.TRANSPORT_CELLULAR
+                    ) -> "Mobile Data"
+
+                    capabilities.hasTransport(
+                        NetworkCapabilities.TRANSPORT_ETHERNET
+                    ) -> "Ethernet"
+
+                    else -> "Other Network"
+                }
+
+                when {
+                    !hasInternet -> "$transport • NO INTERNET"
+                    !validated -> "$transport • NOT VERIFIED"
+                    else -> "$transport • CONNECTED"
+                }
+            }
+        }
+    } catch (_: Exception) {
+        "UNKNOWN"
+    }
+
+    return BlackboxSample(
+        elapsedSeconds = elapsedSeconds,
+        availableRamMb = availableRamMb,
+        totalRamMb = totalRamMb,
+        thermalLabel = thermalLabel,
+        thermalLevel = thermalLevel,
+        networkLabel = networkLabel
+    )
+}
+
+@Composable
+private fun BlackboxScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+
+    var isRecording by remember {
+        mutableStateOf(false)
+    }
+
+    var sessionStartedAt by remember {
+        mutableStateOf(0L)
+    }
+
+    var elapsedSeconds by remember {
+        mutableStateOf(0L)
+    }
+
+    var latestSample by remember {
+        mutableStateOf<BlackboxSample?>(null)
+    }
+
+    val samples = remember {
+        androidx.compose.runtime.mutableStateListOf<BlackboxSample>()
+    }
+
+    val lagMarkers = remember {
+        androidx.compose.runtime.mutableStateListOf<BlackboxLagMarker>()
+    }
+
+    var sessionFinished by remember {
+        mutableStateOf(false)
+    }
+
+    var status by remember {
+        mutableStateOf("READY • Start a session to monitor device conditions.")
+    }
+
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            while (isRecording) {
+                val elapsed = (
+                    SystemClock.elapsedRealtime() - sessionStartedAt
+                    ).coerceAtLeast(0L) / 1000L
+
+                elapsedSeconds = elapsed
+
+                val sample = readBlackboxSample(
+                    context = context,
+                    elapsedSeconds = elapsed
+                )
+
+                latestSample = sample
+
+                if (samples.size < 600) {
+                    samples.add(sample)
+                }
+
+                delay(2000L)
+            }
+        }
+    }
+
+    val current = latestSample
+
+    val ramUsedProgress = current?.let {
+        if (it.totalRamMb > 0L) {
+            (
+                1f - it.availableRamMb.toFloat() /
+                    it.totalRamMb.toFloat()
+                ).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+    } ?: 0f
+
+    val ramUsedMb = current?.let {
+        (it.totalRamMb - it.availableRamMb).coerceAtLeast(0L)
+    } ?: 0L
+
+    val ramColor = when {
+        ramUsedProgress >= 0.90f -> Color(0xFFFF879A)
+        ramUsedProgress >= 0.75f -> Color(0xFFFFC66D)
+        else -> Green
+    }
+
+    val diagnosis = remember(samples.size, lagMarkers.size, latestSample) {
+        buildBlackboxDiagnosis(samples.toList(), lagMarkers.toList())
+    }
+
+    ToolPage(
+        title = "🕵️ NETHA X BLACKBOX",
+        subtitle = "Smart Performance Detective • Session Diagnostics",
+        onBack = {
+            isRecording = false
+            onBack()
+        }
+    ) {
+        PanelCard {
+            Text(
+                "LIVE DEVICE MONITOR",
+                color = Color(0xFFDCCBFF),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+
+            Text(
+                if (isRecording) "● SESSION RECORDING" else "● MONITOR STANDBY",
+                color = if (isRecording) Green else SoftText,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "AVAILABLE RAM",
+                    color = SoftText,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    current?.let { "${it.availableRamMb} MB" } ?: "--",
+                    color = Cyan,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
+
+            LinearProgressIndicator(
+                progress = ramUsedProgress,
+                modifier = Modifier.fillMaxWidth(),
+                color = ramColor,
+                trackColor = Color(0xFF29304B)
+            )
+
+            Text(
+                current?.let {
+                    "Estimated RAM in use: $ramUsedMb MB / ${it.totalRamMb} MB"
+                } ?: "RAM information will appear when monitoring starts.",
+                color = SoftText,
+                fontSize = 10.sp
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "THERMAL STATUS",
+                    color = SoftText,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    current?.thermalLabel ?: "--",
+                    color = when {
+                        (current?.thermalLevel ?: 0) >= 4 ->
+                            Color(0xFFFF879A)
+
+                        (current?.thermalLevel ?: 0) >= 2 ->
+                            Color(0xFFFFC66D)
+
+                        else -> Green
+                    },
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "NETWORK",
+                    color = SoftText,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    current?.networkLabel ?: "--",
+                    color = Cyan,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Text(
+                "Session time: ${formatSessionTime(elapsedSeconds)}",
+                color = MainText,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            StatusText(status, if (isRecording) Green else SoftText)
+        }
+
+        PanelCard {
+            Text(
+                "GAMING SESSION RECORDER",
+                color = Cyan,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+
+            Text(
+                "Records RAM availability, Android thermal status and network connectivity every 2 seconds while this screen is active.",
+                color = SoftText,
+                fontSize = 10.sp,
+                lineHeight = 16.sp
+            )
+
+            GradientActionButton(
+                text = if (isRecording) {
+                    "■ STOP SESSION"
+                } else {
+                    "▶ START SESSION"
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isRecording || samples.size < 600
+            ) {
+                if (!isRecording) {
+                    samples.clear()
+                    lagMarkers.clear()
+                    elapsedSeconds = 0L
+                    sessionStartedAt = SystemClock.elapsedRealtime()
+                    sessionFinished = false
+                    latestSample = readBlackboxSample(context, 0L)
+                    samples.add(latestSample!!)
+                    isRecording = true
+                    status = "RECORDING • Use MARK LAG when you notice a slowdown."
+                } else {
+                    isRecording = false
+                    sessionFinished = true
+                    status = "SESSION STOPPED • ${samples.size} samples recorded."
+                }
+            }
+
+            GradientActionButton(
+                text = "⚑ MARK LAG EVENT",
+                modifier = Modifier.fillMaxWidth(),
+                enabled = isRecording && current != null
+            ) {
+                val sample = latestSample
+
+                if (sample != null) {
+                    lagMarkers.add(
+                        BlackboxLagMarker(
+                            elapsedSeconds = elapsedSeconds,
+                            sample = sample
+                        )
+                    )
+
+                    status =
+                        "LAG EVENT MARKED AT ${formatSessionTime(elapsedSeconds)}"
+                }
+            }
+
+            Text(
+                "Recorded samples: ${samples.size} / 600    •    Lag markers: ${lagMarkers.size}",
+                color = SoftText,
+                fontSize = 10.sp
+            )
+        }
+
+        PanelCard {
+            Text(
+                "SMART DIAGNOSIS",
+                color = Cyan,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+
+            Text(
+                diagnosis,
+                color = MainText,
+                fontSize = 11.sp,
+                lineHeight = 18.sp
+            )
+
+            if (lagMarkers.isNotEmpty()) {
+                Text(
+                    "LAG EVENTS",
+                    color = Color(0xFFFFC66D),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                lagMarkers.takeLast(8).forEachIndexed { index, marker ->
+                    Text(
+                        "${index + 1}. ${formatSessionTime(marker.elapsedSeconds)}  •  RAM available: ${marker.sample.availableRamMb} MB  •  Thermal: ${marker.sample.thermalLabel}",
+                        color = SoftText,
+                        fontSize = 10.sp,
+                        lineHeight = 16.sp
+                    )
+                }
+            } else {
+                Text(
+                    "No lag events marked yet.",
+                    color = SoftText,
+                    fontSize = 10.sp
+                )
+            }
+        }
+
+        GradientActionButton(
+            text = "↗ SHARE DIAGNOSTIC REPORT",
+            modifier = Modifier.fillMaxWidth(),
+            enabled = samples.isNotEmpty() && !isRecording
+        ) {
+            val report = buildBlackboxReport(
+                samples = samples.toList(),
+                markers = lagMarkers.toList(),
+                elapsedSeconds = elapsedSeconds
+            )
+
+            try {
+                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(
+                        Intent.EXTRA_SUBJECT,
+                        "NETHA X BLACKBOX Diagnostic Report"
+                    )
+                    putExtra(Intent.EXTRA_TEXT, report)
+                }
+
+                context.startActivity(
+                    Intent.createChooser(
+                        sendIntent,
+                        "Share BLACKBOX Report"
+                    )
+                )
+            } catch (error: Exception) {
+                status =
+                    "Could not open share menu: ${error.message ?: "Unknown error"}"
+            }
+        }
+
+        GradientActionButton(
+            text = "RESET SESSION",
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isRecording
+        ) {
+            samples.clear()
+            lagMarkers.clear()
+            latestSample = null
+            elapsedSeconds = 0L
+            sessionFinished = false
+            status = "READY • Start a new session to monitor device conditions."
+        }
+
+        PanelCard {
+            Text(
+                "IMPORTANT MEASUREMENT LIMITS",
+                color = Color(0xFFFFC66D),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                "• RAM is the Android system's available-memory reading, not the exact memory usage of a selected game.\n" +
+                    "• Thermal status comes from Android's device thermal API and may not expose every sensor temperature.\n" +
+                    "• Network status shows connection availability/type, not real-time game ping or per-app traffic.\n" +
+                    "• Android does not provide ordinary apps with another game's internal FPS or GPU readings.\n" +
+                    "• Diagnosis shows possible contributing conditions, not guaranteed causes of lag.",
+                color = SoftText,
+                fontSize = 10.sp,
+                lineHeight = 16.sp
+            )
+        }
+    }
+}
+
+private fun buildBlackboxDiagnosis(
+    samples: List<BlackboxSample>,
+    markers: List<BlackboxLagMarker>
+): String {
+    if (samples.isEmpty()) {
+        return "No session data available. Start a session and record some samples before running diagnosis."
+    }
+
+    if (markers.isEmpty()) {
+        return "No lag events were marked. Record a session and press MARK LAG when you notice a slowdown. BLACKBOX can then compare the captured device conditions around those moments."
+    }
+
+    val findings = mutableListOf<String>()
+
+    markers.forEachIndexed { index, marker ->
+        val sample = marker.sample
+        val totalRam = sample.totalRamMb.coerceAtLeast(1L)
+        val availablePercent =
+            sample.availableRamMb.toFloat() / totalRam.toFloat()
+
+        val issues = mutableListOf<String>()
+
+        if (
+            sample.thermalLevel >= PowerManager.THERMAL_STATUS_MODERATE
+        ) {
+            issues.add(
+                "Thermal status was ${sample.thermalLabel}; heat-related performance limitation is possible."
+            )
+        }
+
+        if (
+            sample.availableRamMb < 500L ||
+            availablePercent < 0.10f
+        ) {
+            issues.add(
+                "Available system RAM was low (${sample.availableRamMb} MB); memory pressure may have contributed."
+            )
+        }
+
+        if (
+            sample.networkLabel.contains("DISCONNECTED") ||
+            sample.networkLabel.contains("NO INTERNET") ||
+            sample.networkLabel.contains("NOT VERIFIED")
+        ) {
+            issues.add(
+                "Network connectivity was not fully verified; a connection issue may have contributed to online-game lag."
+            )
+        }
+
+        if (issues.isEmpty()) {
+            issues.add(
+                "No clear RAM, thermal or connectivity warning was captured at this marker. The cause may be outside the measurements available to this app."
+            )
+        }
+
+        findings.add(
+            "Lag marker ${index + 1} at ${formatSessionTime(marker.elapsedSeconds)}:\n" +
+                issues.joinToString(separator = "\n") { "• $it" }
+        )
+    }
+
+    return findings.joinToString(separator = "\n\n")
+}
+
+private fun buildBlackboxReport(
+    samples: List<BlackboxSample>,
+    markers: List<BlackboxLagMarker>,
+    elapsedSeconds: Long
+): String {
+    val report = StringBuilder()
+
+    report.appendLine("NETHA X BLACKBOX — DIAGNOSTIC REPORT")
+    report.appendLine("===================================")
+    report.appendLine("Session duration: ${formatSessionTime(elapsedSeconds)}")
+    report.appendLine("Samples recorded: ${samples.size}")
+    report.appendLine("Lag markers: ${markers.size}")
+    report.appendLine()
+
+    if (samples.isNotEmpty()) {
+        val latest = samples.last()
+
+        report.appendLine("LATEST DEVICE SAMPLE")
+        report.appendLine("Available RAM: ${latest.availableRamMb} MB")
+        report.appendLine("Total RAM: ${latest.totalRamMb} MB")
+        report.appendLine("Thermal status: ${latest.thermalLabel}")
+        report.appendLine("Network: ${latest.networkLabel}")
+        report.appendLine()
+    }
+
+    report.appendLine("SMART DIAGNOSIS")
+    report.appendLine(
+        buildBlackboxDiagnosis(samples, markers)
+    )
+
+    report.appendLine()
+    report.appendLine("SAMPLE HISTORY")
+    samples.takeLast(30).forEach { sample ->
+        report.appendLine(
+            "${formatSessionTime(sample.elapsedSeconds)} | " +
+                "RAM available ${sample.availableRamMb} MB | " +
+                "Thermal ${sample.thermalLabel} | " +
+                "Network ${sample.networkLabel}"
+        )
+    }
+
+    report.appendLine()
+    report.appendLine(
+        "Note: This report contains Android system-level observations. It does not measure another app's internal FPS, GPU load, or game-server ping."
+    )
+
+    return report.toString()
+}
+
+private fun formatSessionTime(seconds: Long): String {
+    val minutes = seconds / 60L
+    val remainingSeconds = seconds % 60L
+
+    return "%02d:%02d".format(minutes, remainingSeconds)
+}
+
