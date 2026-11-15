@@ -411,28 +411,24 @@ private fun AppBackdrop() {
             .background(
                 Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFF100B25),
+                        Color(0xFF0B0A1B),
                         Bg,
-                        Color(0xFF061B29),
-                        Color(0xFF090817)
+                        Color(0xFF071523)
                     ),
                     start = Offset.Zero,
-                    end = Offset(1100f, 1900f)
+                    end = Offset(900f, 1800f)
                 )
             )
     ) {
-        // Soft purple atmosphere.
         Box(
             modifier = Modifier
-                .size(310.dp)
+                .size(260.dp)
                 .align(Alignment.TopStart)
-                .offset(x = (-95).dp, y = (-105).dp)
-                .graphicsLayer { alpha = 0.28f }
+                .graphicsLayer { alpha = 0.22f }
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            Color(0xFF9B5CFF),
-                            Color(0x553F2A86),
+                            Color(0xFF853CFF),
                             Color.Transparent
                         )
                     ),
@@ -440,35 +436,15 @@ private fun AppBackdrop() {
                 )
         )
 
-        // Cyan atmosphere near the bottom.
         Box(
             modifier = Modifier
-                .size(340.dp)
+                .size(280.dp)
                 .align(Alignment.BottomEnd)
-                .offset(x = 115.dp, y = 105.dp)
-                .graphicsLayer { alpha = 0.25f }
+                .graphicsLayer { alpha = 0.20f }
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            Color(0xFF00D9FF),
-                            Color(0x44305E9B),
-                            Color.Transparent
-                        )
-                    ),
-                    CircleShape
-                )
-        )
-
-        // A subtle central blue glow.
-        Box(
-            modifier = Modifier
-                .size(230.dp)
-                .align(Alignment.Center)
-                .graphicsLayer { alpha = 0.09f }
-                .background(
-                    Brush.radialGradient(
-                        listOf(
-                            Color(0xFF655BFF),
+                            Color(0xFF00CFFF),
                             Color.Transparent
                         )
                     ),
@@ -653,7 +629,6 @@ private fun WelcomePanel() {
         label = "welcome-panel-glow"
     )
 
-    // Original animation and timing retained.
     val glowAlpha by glowTransition.animateFloat(
         initialValue = 0.10f,
         targetValue = 0.24f,
@@ -668,35 +643,22 @@ private fun WelcomePanel() {
         modifier = Modifier
             .fillMaxWidth()
             .height(222.dp)
-            .shadow(
-                elevation = 22.dp,
-                shape = RoundedCornerShape(25.dp),
-                spotColor = Purple
-            )
             .clip(RoundedCornerShape(25.dp))
+            .border(
+                1.dp,
+                Color(0x559D72FF),
+                RoundedCornerShape(25.dp)
+            )
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xFF321B58),
-                        Color(0xFF17284A),
-                        Color(0xFF102C3B)
+                        Color(0xFF2A1745),
+                        Color(0xFF111E39)
                     )
                 )
             )
-            .border(
-                width = 1.2.dp,
-                brush = Brush.linearGradient(
-                    listOf(
-                        Color(0xCCB58AFF),
-                        Color(0x8835EAFF),
-                        Color(0x669B5CFF)
-                    )
-                ),
-                shape = RoundedCornerShape(25.dp)
-            )
             .padding(23.dp)
     ) {
-        // Original animated glow layer.
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -704,28 +666,10 @@ private fun WelcomePanel() {
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            Color(0x8835EAFF),
-                            Color(0x2235EAFF),
+                            Color(0x5535EAFF),
                             Color.Transparent
                         )
                     )
-                )
-        )
-
-        // Decorative upper-right lighting.
-        Box(
-            modifier = Modifier
-                .size(145.dp)
-                .align(Alignment.TopEnd)
-                .offset(x = 45.dp, y = (-65).dp)
-                .background(
-                    Brush.radialGradient(
-                        listOf(
-                            Color(0x559B5CFF),
-                            Color.Transparent
-                        )
-                    ),
-                    CircleShape
                 )
         )
 
@@ -736,19 +680,7 @@ private fun WelcomePanel() {
                 .offsetXCompat(50.dp)
                 .border(
                     1.dp,
-                    Color(0x55B58AFF),
-                    CircleShape
-                )
-        )
-
-        Box(
-            modifier = Modifier
-                .size(125.dp)
-                .align(Alignment.CenterEnd)
-                .offsetXCompat(27.dp)
-                .border(
-                    1.dp,
-                    Color(0x4435EAFF),
+                    Color(0x33B58AFF),
                     CircleShape
                 )
         )
@@ -756,7 +688,7 @@ private fun WelcomePanel() {
         Column(modifier = Modifier.align(Alignment.CenterStart)) {
             Text(
                 "W E L C O M E",
-                color = Color(0xFFCFB6FF),
+                color = Color(0xFFB99AFF),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 2.8.sp
@@ -784,7 +716,7 @@ private fun WelcomePanel() {
 
             Text(
                 "Your next-level digital experience starts here.",
-                color = Color(0xFFD0CBE3),
+                color = Color(0xFFC5C0D8),
                 fontSize = 11.sp
             )
         }
@@ -810,7 +742,6 @@ private fun FeatureCard(
         entryVisible = true
     }
 
-    // Original entry animations retained.
     val entryAlpha by animateFloatAsState(
         targetValue = if (entryVisible) 1f else 0f,
         animationSpec = tween(380, easing = FastOutSlowInEasing),
@@ -830,9 +761,9 @@ private fun FeatureCard(
     )
 
     val interaction = remember { MutableInteractionSource() }
+
     val pressed by interaction.collectIsPressedAsState()
 
-    // Original tap animation retained.
     val pressScale by animateFloatAsState(
         targetValue = if (pressed) 0.97f else 1f,
         animationSpec = tween(160),
@@ -848,31 +779,19 @@ private fun FeatureCard(
                 alpha = entryAlpha
                 translationY = entryOffset
             }
-            .shadow(
-                elevation = 13.dp,
-                shape = RoundedCornerShape(19.dp),
-                spotColor = Purple
-            )
             .clip(RoundedCornerShape(19.dp))
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xFF2A1B49),
-                        Color(0xFF142C43),
-                        Color(0xFF102331)
+                        Color(0xFF21183B),
+                        Color(0xFF102337)
                     )
                 )
             )
             .border(
-                width = 1.dp,
-                brush = Brush.linearGradient(
-                    listOf(
-                        Color(0xAAAE82FF),
-                        Color(0x7735EAFF),
-                        Color(0x669B5CFF)
-                    )
-                ),
-                shape = RoundedCornerShape(19.dp)
+                1.dp,
+                Color(0x669B5CFF),
+                RoundedCornerShape(19.dp)
             )
             .clickable(
                 interactionSource = interaction,
@@ -886,24 +805,18 @@ private fun FeatureCard(
         Box(
             modifier = Modifier
                 .size(43.dp)
-                .shadow(
-                    9.dp,
-                    RoundedCornerShape(13.dp),
-                    spotColor = Cyan
-                )
                 .clip(RoundedCornerShape(13.dp))
                 .background(
                     Brush.linearGradient(
                         listOf(
-                            Color(0x889B5CFF),
-                            Color(0x6635EAFF),
-                            Color(0x4435EAFF)
+                            Color(0x559B5CFF),
+                            Color(0x3335EAFF)
                         )
                     )
                 )
                 .border(
                     1.dp,
-                    Color(0x889BCAFF),
+                    Color(0x669B9AFF),
                     RoundedCornerShape(13.dp)
                 ),
             contentAlignment = Alignment.Center
@@ -915,7 +828,7 @@ private fun FeatureCard(
 
         Text(
             title,
-            color = Color(0xFFE8DCFF),
+            color = Color(0xFFDCCBFF),
             fontSize = 11.sp,
             fontWeight = FontWeight.ExtraBold,
             textAlign = TextAlign.Center,
@@ -928,7 +841,7 @@ private fun FeatureCard(
 
         Text(
             description,
-            color = Color(0xFFBDBBD0),
+            color = SoftText,
             fontSize = 9.sp,
             textAlign = TextAlign.Center,
             maxLines = 1
@@ -952,81 +865,32 @@ private fun ExperiencePanel() {
         modifier = Modifier
             .fillMaxWidth()
             .height(190.dp)
-            .shadow(
-                elevation = 17.dp,
-                shape = RoundedCornerShape(20.dp),
-                spotColor = Cyan
-            )
             .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xFF142C43),
-                        Color(0xFF1B1538),
-                        Color(0xFF101D32)
+                        Color(0xFF101D32),
+                        Color(0xFF17102B)
                     )
                 )
             )
             .border(
-                width = 1.dp,
-                brush = Brush.linearGradient(
-                    listOf(
-                        Color(0x8835EAFF),
-                        Color(0x779B5CFF),
-                        Color(0x5535EAFF)
-                    )
-                ),
-                shape = RoundedCornerShape(20.dp)
+                1.dp,
+                Color(0x4435EAFF),
+                RoundedCornerShape(20.dp)
             ),
         contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(180.dp)
-                .align(Alignment.CenterStart)
-                .offset(x = (-95).dp)
-                .background(
-                    Brush.radialGradient(
-                        listOf(
-                            Color(0x4435EAFF),
-                            Color.Transparent
-                        )
-                    ),
-                    CircleShape
-                )
-        )
-
-        Box(
-            modifier = Modifier
-                .size(180.dp)
-                .align(Alignment.CenterEnd)
-                .offset(x = 95.dp)
-                .background(
-                    Brush.radialGradient(
-                        listOf(
-                            Color(0x449B5CFF),
-                            Color.Transparent
-                        )
-                    ),
-                    CircleShape
-                )
-        )
-
         Canvas(modifier = Modifier.size(132.dp)) {
             drawCircle(
-                Color(0x7735EAFF),
+                Color(0x5535EAFF),
                 style = Stroke(width = 1.2.dp.toPx())
             )
 
             drawCircle(
-                Color(0x669B5CFF),
+                Color(0x559B5CFF),
                 radius = size.minDimension * 0.36f,
                 style = Stroke(width = 1.2.dp.toPx())
-            )
-
-            drawCircle(
-                Color(0x2235EAFF),
-                radius = size.minDimension * 0.23f
             )
         }
 
@@ -1131,31 +995,19 @@ private fun PanelCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(
-                elevation = 12.dp,
-                shape = RoundedCornerShape(18.dp),
-                spotColor = Purple
-            )
             .clip(RoundedCornerShape(18.dp))
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xF2222440),
-                        Color(0xF2142639),
+                        Color(0xF21A1B35),
                         Color(0xF2112030)
                     )
                 )
             )
             .border(
-                width = 1.dp,
-                brush = Brush.linearGradient(
-                    listOf(
-                        Color(0x779B78FF),
-                        Color(0x5535EAFF),
-                        Color(0x665C6FAD)
-                    )
-                ),
-                shape = RoundedCornerShape(18.dp)
+                1.dp,
+                PanelBorder,
+                RoundedCornerShape(18.dp)
             )
             .padding(15.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -1171,9 +1023,9 @@ private fun GradientActionButton(
     onClick: () -> Unit
 ) {
     val interaction = remember { MutableInteractionSource() }
+
     val pressed by interaction.collectIsPressedAsState()
 
-    // Original tap scale and 150 ms timing retained.
     val scale by animateFloatAsState(
         targetValue = if (pressed && enabled) 0.97f else 1f,
         animationSpec = tween(150),
@@ -1187,18 +1039,13 @@ private fun GradientActionButton(
                 scaleX = scale
                 scaleY = scale
             }
-            .shadow(
-                elevation = if (enabled) 13.dp else 2.dp,
-                shape = RoundedCornerShape(12.dp),
-                spotColor = if (enabled) Cyan else Color.Transparent
-            )
             .clip(RoundedCornerShape(12.dp))
             .background(
                 if (enabled) {
                     Brush.linearGradient(
                         listOf(
-                            Color(0xFFAD65FF),
-                            Color(0xFF5575FF),
+                            Color(0xFF9B5CFF),
+                            Color(0xFF397DFF),
                             Color(0xFF00CFFF)
                         )
                     )
@@ -1212,15 +1059,9 @@ private fun GradientActionButton(
                 }
             )
             .border(
-                width = 1.dp,
-                brush = Brush.linearGradient(
-                    listOf(
-                        Color(0xCCFFFFFF),
-                        Color(0x667DEBFF),
-                        Color(0x669B5CFF)
-                    )
-                ),
-                shape = RoundedCornerShape(12.dp)
+                1.dp,
+                Color(0xAA78D2FF),
+                RoundedCornerShape(12.dp)
             )
             .clickable(
                 enabled = enabled,
