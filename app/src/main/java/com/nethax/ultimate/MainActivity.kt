@@ -519,7 +519,12 @@ private fun DashboardScreen(
                 translationY = dashboardOffset
             }
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 19.dp, vertical = 22.dp),
+.padding(
+    start = 19.dp,
+    end = 19.dp,
+    top = 32.dp,
+    bottom = 22.dp
+),
         verticalArrangement = Arrangement.spacedBy(22.dp)
     ) {
         Row(
@@ -619,7 +624,10 @@ private fun DashboardScreen(
             )
         }
 
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(12.dp)
+) {
             FeatureCard(
                 modifier = Modifier.weight(1f),
                 icon = "⚡",
@@ -865,21 +873,8 @@ private fun FeatureCard(
                 alpha = entryAlpha
                 translationY = entryOffset
             }
-            .shadow(
-                elevation = 13.dp,
-                shape = RoundedCornerShape(19.dp),
-                spotColor = Purple
-            )
             .clip(RoundedCornerShape(19.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        Color(0xFF2A1B49),
-                        Color(0xFF142C43),
-                        Color(0xFF102331)
-                    )
-                )
-            )
+.background(Color(0xFF172536))
             .border(
                 width = 1.dp,
                 brush = Brush.linearGradient(
@@ -903,21 +898,8 @@ private fun FeatureCard(
         Box(
             modifier = Modifier
                 .size(43.dp)
-                .shadow(
-                    9.dp,
-                    RoundedCornerShape(13.dp),
-                    spotColor = Cyan
-                )
-                .clip(RoundedCornerShape(13.dp))
-                .background(
-                    Brush.linearGradient(
-                        listOf(
-                            Color(0x889B5CFF),
-                            Color(0x6635EAFF),
-                            Color(0x4435EAFF)
-                        )
-                    )
-                )
+.clip(RoundedCornerShape(13.dp))
+.background(Color(0xFF21445A))
                 .border(
                     1.dp,
                     Color(0x889BCAFF),
@@ -1089,7 +1071,7 @@ private fun ToolPage(
                 alpha = pageAlpha
                 translationY = pageOffset
             }
-            .verticalScroll(rememberScrollState())
+            
             .padding(horizontal = 18.dp, vertical = 18.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
