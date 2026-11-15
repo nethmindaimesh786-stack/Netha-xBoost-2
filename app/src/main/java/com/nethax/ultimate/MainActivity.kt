@@ -27,6 +27,9 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -457,9 +460,31 @@ private fun DashboardScreen(
     onTranslation: () -> Unit,
     onOptimizer: () -> Unit
 ) {
+    var dashboardVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        dashboardVisible = true
+    }
+
+    val dashboardAlpha by animateFloatAsState(
+        targetValue = if (dashboardVisible) 1f else 0f,
+        animationSpec = tween(520, easing = FastOutSlowInEasing),
+        label = "dashboard-entry-alpha"
+    )
+
+    val dashboardOffset by animateFloatAsState(
+        targetValue = if (dashboardVisible) 0f else 18f,
+        animationSpec = tween(520, easing = FastOutSlowInEasing),
+        label = "dashboard-entry-offset"
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .graphicsLayer {
+                alpha = dashboardAlpha
+                translationY = dashboardOffset
+            }
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 19.dp, vertical = 22.dp),
         verticalArrangement = Arrangement.spacedBy(22.dp)
@@ -546,6 +571,7 @@ private fun DashboardScreen(
                 title = "AI Background Remover",
                 description = "Remove photo background",
                 action = "OPEN TOOL  →",
+                animationDelayMillis = 80L,
                 onClick = onBackground
             )
 
@@ -555,6 +581,7 @@ private fun DashboardScreen(
                 title = "Translation Camera",
                 description = "Live Camera Translator",
                 action = "OPEN TOOL  →",
+                animationDelayMillis = 170L,
                 onClick = onTranslation
             )
         }
@@ -566,6 +593,7 @@ private fun DashboardScreen(
                 title = "Mobile Optimizer",
                 description = "App Cache Cleaner",
                 action = "BOOST DEVICE  →",
+                animationDelayMillis = 260L,
                 onClick = onOptimizer
             )
 
@@ -597,6 +625,20 @@ private fun DashboardScreen(
 
 @Composable
 private fun WelcomePanel() {
+    val glowTransition = rememberInfiniteTransition(
+        label = "welcome-panel-glow"
+    )
+
+    val glowAlpha by glowTransition.animateFloat(
+        initialValue = 0.10f,
+        targetValue = 0.24f,
+        animationSpec = infiniteRepeatable(
+            tween(1800, easing = FastOutSlowInEasing),
+            RepeatMode.Reverse
+        ),
+        label = "welcome-glow-alpha"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -617,6 +659,20 @@ private fun WelcomePanel() {
             )
             .padding(23.dp)
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { alpha = glowAlpha }
+                .background(
+                    Brush.radialGradient(
+                        listOf(
+                            Color(0x5535EAFF),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
         Box(
             modifier = Modifier
                 .size(170.dp)
@@ -674,13 +730,41 @@ private fun FeatureCard(
     title: String,
     description: String,
     action: String,
+    animationDelayMillis: Long = 0L,
     onClick: () -> Unit
 ) {
+    var entryVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        if (animationDelayMillis > 0L) {
+            delay(animationDelayMillis)
+        }
+        entryVisible = true
+    }
+
+    val entryAlpha by animateFloatAsState(
+        targetValue = if (entryVisible) 1f else 0f,
+        animationSpec = tween(380, easing = FastOutSlowInEasing),
+        label = "feature-entry-alpha"
+    )
+
+    val entryOffset by animateFloatAsState(
+        targetValue = if (entryVisible) 0f else 16f,
+        animationSpec = tween(380, easing = FastOutSlowInEasing),
+        label = "feature-entry-offset"
+    )
+
+    val entryScale by animateFloatAsState(
+        targetValue = if (entryVisible) 1f else 0.96f,
+        animationSpec = tween(380, easing = FastOutSlowInEasing),
+        label = "feature-entry-scale"
+    )
+
     val interaction = remember { MutableInteractionSource() }
 
     val pressed by interaction.collectIsPressedAsState()
 
-    val scale by animateFloatAsState(
+    val pressScale by animateFloatAsState(
         targetValue = if (pressed) 0.97f else 1f,
         animationSpec = tween(160),
         label = "feature-press-scale"
@@ -690,8 +774,10 @@ private fun FeatureCard(
         modifier = modifier
             .height(160.dp)
             .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
+                scaleX = pressScale * entryScale
+                scaleY = pressScale * entryScale
+                alpha = entryAlpha
+                translationY = entryOffset
             }
             .clip(RoundedCornerShape(19.dp))
             .background(
@@ -825,9 +911,31 @@ private fun ToolPage(
     onBack: () -> Unit,
     content: @Composable () -> Unit
 ) {
+    var pageVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        pageVisible = true
+    }
+
+    val pageAlpha by animateFloatAsState(
+        targetValue = if (pageVisible) 1f else 0f,
+        animationSpec = tween(380, easing = FastOutSlowInEasing),
+        label = "tool-page-entry-alpha"
+    )
+
+    val pageOffset by animateFloatAsState(
+        targetValue = if (pageVisible) 0f else 14f,
+        animationSpec = tween(380, easing = FastOutSlowInEasing),
+        label = "tool-page-entry-offset"
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .graphicsLayer {
+                alpha = pageAlpha
+                translationY = pageOffset
+            }
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp, vertical = 18.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -1128,7 +1236,10 @@ private fun BackgroundRemoverScreen(onBack: () -> Unit) {
                 }
             }
 
-            if (isRemoving) {
+            AnimatedVisibility(
+                visible = isRemoving,
+                enter = fadeIn(animationSpec = tween(180))
+            ) {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
                     color = Cyan,
@@ -1137,41 +1248,49 @@ private fun BackgroundRemoverScreen(onBack: () -> Unit) {
             }
         }
 
-        if (resultBytes != null) {
-            PanelCard {
-                Text(
-                    "BACKGROUND REMOVED",
-                    color = Cyan,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                )
+        AnimatedVisibility(
+            visible = resultBytes != null,
+            enter = fadeIn(animationSpec = tween(380)) +
+                expandVertically(animationSpec = tween(380))
+        ) {
+            val imageBytes = resultBytes
 
-                AsyncImage(
-                    model = resultBytes,
-                    contentDescription = "Background removed result",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp)
-                        .clip(RoundedCornerShape(13.dp))
-                        .background(Color.White),
-                    contentScale = ContentScale.Fit
-                )
+            if (imageBytes != null) {
+                PanelCard {
+                    Text(
+                        "BACKGROUND REMOVED",
+                        color = Cyan,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
 
-                GradientActionButton(
-                    "⬇ SAVE PNG TO GALLERY",
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    try {
-                        val saved = saveImageToGallery(
-                            context,
-                            resultBytes!!
-                        )
+                    AsyncImage(
+                        model = imageBytes,
+                        contentDescription = "Background removed result",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp)
+                            .clip(RoundedCornerShape(13.dp))
+                            .background(Color.White),
+                        contentScale = ContentScale.Fit
+                    )
 
-                        status = saved
-                    } catch (error: Exception) {
-                        status =
-                            "SAVE FAILED: ${error.message ?: "Unknown error"}"
+                    GradientActionButton(
+                        "⬇ SAVE PNG TO GALLERY",
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        try {
+                            val saved = saveImageToGallery(
+                                context,
+                                imageBytes
+                            )
+
+                            status = saved
+                        } catch (error: Exception) {
+                            status =
+                                "SAVE FAILED: ${error.message ?: "Unknown error"}"
+                        }
                     }
                 }
             }
@@ -2158,7 +2277,10 @@ private fun MobileOptimizerScreen(onBack: () -> Unit) {
                 lineHeight = 16.sp
             )
 
-            if (isRunning) {
+            AnimatedVisibility(
+                visible = isRunning,
+                enter = fadeIn(animationSpec = tween(180))
+            ) {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
                     color = Cyan,
