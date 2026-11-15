@@ -216,12 +216,17 @@ private fun NethaApp() {
                             onBack = { currentScreen = "home" }
                         )
 
+                        "file_rescue" -> SmartFileRescueScreen(
+                            onBack = { currentScreen = "home" }
+                        )
+
                         else -> DashboardScreen(
                             onBackground = { currentScreen = "background" },
                             onTranslation = { currentScreen = "translation" },
                             onOptimizer = { currentScreen = "optimizer" },
                             onNetworkSpeed = { currentScreen = "network" },
-                            onBlackbox = { currentScreen = "blackbox" }
+                            onBlackbox = { currentScreen = "blackbox" },
+                            onFileRescue = { currentScreen = "file_rescue" }
                         )
                     }
                 }
@@ -494,7 +499,8 @@ private fun DashboardScreen(
     onTranslation: () -> Unit,
     onOptimizer: () -> Unit,
     onNetworkSpeed: () -> Unit,
-    onBlackbox: () -> Unit
+    onBlackbox: () -> Unit,
+    onFileRescue: () -> Unit
 ) {
     var dashboardVisible by remember { mutableStateOf(false) }
 
@@ -651,7 +657,15 @@ private fun DashboardScreen(
                 onClick = onBlackbox
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            FeatureCard(
+                modifier = Modifier.weight(1f),
+                icon = "📁",
+                title = "SMART FILE RESCUE",
+                description = "Scan • Organize • Recover",
+                action = "OPEN FILE RESCUE  →",
+                animationDelayMillis = 520L,
+                onClick = onFileRescue
+            )
         }
 
         Text(
