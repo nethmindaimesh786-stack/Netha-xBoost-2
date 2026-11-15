@@ -3525,7 +3525,7 @@ private fun BlackboxScreen(onBack: () -> Unit) {
                     "▶ START SESSION"
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isRecording || samples.size < 600
+                enabled = true
             ) {
                 if (!isRecording) {
                     samples.clear()
