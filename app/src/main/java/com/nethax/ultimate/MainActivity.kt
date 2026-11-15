@@ -123,6 +123,9 @@ import java.util.UUID
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 
 private val Bg = Color(0xFF070713)
 private val Panel = Color(0xFF11182B)
@@ -528,66 +531,52 @@ private fun DashboardScreen(
         verticalArrangement = Arrangement.spacedBy(22.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .shadow(
-                            14.dp,
-                            RoundedCornerShape(14.dp),
-                            spotColor = Purple
-                        )
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(Purple, Cyan)
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        "NX",
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color.White
-                    )
-                }
+    modifier = Modifier.fillMaxWidth(),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.SpaceBetween
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
 
-                Spacer(Modifier.width(11.dp))
+        Image(
+            painter = painterResource(R.drawable.netha_logo),
+            contentDescription = "NETHA X ULTIMATE Logo",
+            modifier = Modifier
+                .size(46.dp)
+                .clip(RoundedCornerShape(14.dp)),
+            contentScale = ContentScale.Fit
+        )
 
-                Column {
-                    Text(
-                        "NETHA X",
-                        color = MainText,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.2.sp
-                    )
+        Spacer(Modifier.width(11.dp))
 
-                    Text(
-                        "U L T I M A T E",
-                        color = Color(0xFFAAA3C7),
-                        fontSize = 9.sp,
-                        letterSpacing = 2.3.sp
-                    )
-                }
-            }
+        Column {
+            Text(
+                "NETHA X",
+                color = MainText,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 1.2.sp
+            )
 
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .shadow(
-                        8.dp,
-                        CircleShape,
-                        spotColor = Green
-                    )
-                    .background(Green, CircleShape)
+            Text(
+                "U L T I M A T E",
+                color = Color(0xFFAAA3C7),
+                fontSize = 9.sp,
+                letterSpacing = 2.3.sp
             )
         }
+    }
+
+    Box(
+        modifier = Modifier
+            .size(10.dp)
+            .shadow(
+                8.dp,
+                CircleShape,
+                spotColor = Green
+            )
+            .background(Green, CircleShape)
+    )
+}
 
         WelcomePanel()
 
