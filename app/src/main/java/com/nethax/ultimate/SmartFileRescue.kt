@@ -170,13 +170,15 @@ private fun rescueCategory(file: RescueFile): String {
     }
 }
 
-private fun rescueCopy(context: Context, source: Uri, target: Uri): Boolean = try {
-    val input = context.contentResolver.openInputStream(source) ?: return false
-    val output = context.contentResolver.openOutputStream(target, "w") ?: return false
-    input.use { from -> output.use { to -> from.copyTo(to) } }
-    true
-} catch (_: Exception) {
-    false
+private fun rescueCopy(context: Context, source: Uri, target: Uri): Boolean {
+    return try {
+        val input = context.contentResolver.openInputStream(source) ?: return false
+        val output = context.contentResolver.openOutputStream(target, "w") ?: return false
+        input.use { from -> output.use { to -> from.copyTo(to) } }
+        true
+    } catch (_: Exception) {
+        false
+    }
 }
 
 private fun rescueBackupAndDelete(context: Context, item: RescueFile): RescueTrash? {
@@ -199,17 +201,19 @@ private fun rescueBackupAndDelete(context: Context, item: RescueFile): RescueTra
     }
 }
 
-private fun restoreRescueFile(context: Context, item: RescueTrash): Boolean = try {
-    val newUri = DocumentsContract.createDocument(
-        context.contentResolver, Uri.parse(item.parentUri), item.mime, item.name
-    ) ?: return false
-    val input = File(item.backup).inputStream()
-    val output = context.contentResolver.openOutputStream(newUri, "w") ?: return false
-    input.use { from -> output.use { to -> from.copyTo(to) } }
-    File(item.backup).delete()
-    true
-} catch (_: Exception) {
-    false
+private fun restoreRescueFile(context: Context, item: RescueTrash): Boolean {
+    return try {
+        val newUri = DocumentsContract.createDocument(
+            context.contentResolver, Uri.parse(item.parentUri), item.mime, item.name
+        ) ?: return false
+        val input = File(item.backup).inputStream()
+        val output = context.contentResolver.openOutputStream(newUri, "w") ?: return false
+        input.use { from -> output.use { to -> from.copyTo(to) } }
+        File(item.backup).delete()
+        true
+    } catch (_: Exception) {
+        false
+    }
 }
 
 @Composable
