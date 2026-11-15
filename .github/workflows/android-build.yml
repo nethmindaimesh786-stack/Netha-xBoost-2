@@ -24,34 +24,25 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Locate Gradle Wrapper
-        id: gradle
-        shell: bash
+      - name: Set Up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Verify Project
         run: |
-          WRAPPER=$(find . -type f -name gradlew -not -path '*/.gradle/*' | head -n 1)
-
-          if [ -z "$WRAPPER" ]; then
-            echo "ERROR: gradlew file not found in repository."
-            echo "Repository files:"
-            find . -maxdepth 4 -type f | sort | head -200
-            exit 1
-          fi
-
-          echo "wrapper=$WRAPPER" >> "$GITHUB_OUTPUT"
-          echo "Found Gradle wrapper: $WRAPPER"
+          ls -la
+          test -f settings.gradle.kts
+          test -f build.gradle.kts
+          test -f app/build.gradle.kts
 
       - name: Build Debug APK
-        shell: bash
-        run: |
-          WRAPPER="${{ steps.gradle.outputs.wrapper }}"
-          chmod +x "$WRAPPER"
-          cd "$(dirname "$WRAPPER")"
-          ./gradlew :app:assembleDebug --stacktrace
+        run: gradle :app:assembleDebug --stacktrace
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: NETHA-X-ULTIMATE-DEBUG-APK
-          path: "**/app/build/outputs/apk/debug/*.apk"
+          path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
