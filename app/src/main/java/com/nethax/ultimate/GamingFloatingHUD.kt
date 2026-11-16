@@ -38,9 +38,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
-private val HudGreen = Color(0xFF00FFAE)
-private val HudCyan = Color(0xFF35EAFF)
-private val HudPanel = Color(0xFF11182B)
+private val HudGreen = Color(0xFF16875A)
+private val HudCyan = Color(0xFF2479F2)
+private val HudPanel = Color(0xFFFFFFFF)
 
 private data class LaunchableGame(
     val name: String,
