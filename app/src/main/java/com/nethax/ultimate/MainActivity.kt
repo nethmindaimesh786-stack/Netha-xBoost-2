@@ -163,7 +163,7 @@ private fun NethaApp(window: Window) {
     var splashVisible by rememberSaveable { mutableStateOf(true) }
 
     SideEffect {
-        val lightDashboard = !splashVisible && currentScreen == "home"
+        val lightDashboard = !splashVisible
         window.statusBarColor = if (lightDashboard) {
             android.graphics.Color.rgb(245, 248, 255)
         } else {
