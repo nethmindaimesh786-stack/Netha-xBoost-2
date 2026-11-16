@@ -224,6 +224,10 @@ private fun NethaApp() {
                             onBack = { currentScreen = "home" }
                         )
 
+                        "aim_frame" -> NethaXAimFrame(
+                            onBack = { currentScreen = "home" }
+                        )
+
                         else -> DashboardScreen(
                             onBackground = { currentScreen = "background" },
                             onTranslation = { currentScreen = "translation" },
@@ -231,7 +235,8 @@ private fun NethaApp() {
                             onNetworkSpeed = { currentScreen = "network" },
                             onBlackbox = { currentScreen = "blackbox" },
                             onFileRescue = { currentScreen = "file_rescue" },
-                            onGamingHud = { currentScreen = "gaming_hud" }
+                            onGamingHud = { currentScreen = "gaming_hud" },
+                            onAimFrame = { currentScreen = "aim_frame" }
                         )
                     }
                 }
@@ -497,4 +502,3 @@ private fun AppBackdrop() {
         )
     }
 }
-

@@ -1,4 +1,3 @@
-
 package com.nethax.ultimate
 
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -65,7 +64,8 @@ internal fun DashboardScreen(
     onNetworkSpeed: () -> Unit,
     onBlackbox: () -> Unit,
     onFileRescue: () -> Unit,
-    onGamingHud: () -> Unit
+    onGamingHud: () -> Unit,
+    onAimFrame: () -> Unit
 ) {
     var dashboardVisible by remember { mutableStateOf(false) }
 
@@ -229,7 +229,7 @@ internal fun DashboardScreen(
             )
         }
 
-        // Gaming Floating HUD - same card width as other tools
+        // Gaming Floating HUD and Aim Frame
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -244,7 +244,15 @@ internal fun DashboardScreen(
                 onClick = onGamingHud
             )
 
-            Spacer(Modifier.weight(1f))
+            FeatureCard(
+                modifier = Modifier.weight(1f),
+                icon = "🎯",
+                title = "NETHA X AIM FRAME",
+                description = "Adjustable Static Aim Guide",
+                action = "OPEN AIM FRAME  →",
+                animationDelayMillis = 680L,
+                onClick = onAimFrame
+            )
         }
 
         Text(
