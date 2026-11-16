@@ -15,11 +15,13 @@ import android.os.Build
 import android.os.IBinder
 import android.provider.Settings
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.content.pm.ServiceInfo
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.TextView
 import kotlin.math.min
 
 class NethaXAimFrameService : Service() {
@@ -54,7 +56,7 @@ class NethaXAimFrameService : Service() {
     private var frameView: AimFrameView? = null
     private var frameParams: WindowManager.LayoutParams? = null
 
-    private var controlsView: LinearLayout? = null
+    private var controlsView: View? = null
     private var controlsParams: WindowManager.LayoutParams? = null
 
     private var frameSize = 180f
@@ -63,6 +65,10 @@ class NethaXAimFrameService : Service() {
     private var positionY = 0
 
     private var isMinimized = false
+    private var controlsExpanded = false
+
+    private var bubbleX = 16
+    private var bubbleY = 120
 
     override fun onCreate() {
         super.onCreate()
@@ -237,9 +243,9 @@ class NethaXAimFrameService : Service() {
 
         createNotificationChannel()
 
-        val notification = createNotification()
-
         try {
+            val notification = createNotification()
+
             if (Build.VERSION.SDK_INT >= 34) {
                 startForeground(
                     NOTIFICATION_ID,
@@ -268,7 +274,9 @@ class NethaXAimFrameService : Service() {
             return
         }
 
-        if (!showControls()) {
+        controlsExpanded = false
+
+        if (!showBubble()) {
             stopAimFrame()
             return
         }
@@ -357,14 +365,160 @@ class NethaXAimFrameService : Service() {
         frameParams = null
     }
 
-    // FLOATING CONTROL PANEL
+    // FLOATING BALL
 
-    private fun showControls(): Boolean {
-        if (controlsView != null) return true
-        return createControls(false)
+    private fun showBubble(): Boolean {
+
+        removeControls()
+
+        return try {
+
+            val bubble = TextView(this).apply {
+                text = "N"
+                textSize = 17f
+                gravity = Gravity.CENTER
+                setTextColor(Color.WHITE)
+
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(Color.rgb(0, 170, 205))
+                    setStroke(dp(2), Color.CYAN)
+                }
+
+                elevation = dp(8).toFloat()
+            }
+
+            val type = if (Build.VERSION.SDK_INT >= 26) {
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            } else {
+                @Suppress("DEPRECATION")
+                WindowManager.LayoutParams.TYPE_PHONE
+            }
+
+            val params = WindowManager.LayoutParams(
+                dp(50),
+                dp(50),
+                type,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                android.graphics.PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.TOP or Gravity.START
+                x = bubbleX
+                y = bubbleY
+            }
+
+            bubble.setOnTouchListener(
+                createDragListener(bubble, params)
+            )
+
+            bubble.setOnClickListener {
+                showExpandedControls()
+            }
+
+            windowManager.addView(bubble, params)
+
+            controlsView = bubble
+            controlsParams = params
+
+            true
+
+        } catch (_: Exception) {
+            removeControls()
+            false
+        }
     }
 
-    private fun createControls(minimized: Boolean): Boolean {
+    // DRAG FLOATING BALL
+
+    private fun createDragListener(
+        view: View,
+        params: WindowManager.LayoutParams
+    ): View.OnTouchListener {
+
+        var startX = 0
+        var startY = 0
+        var touchX = 0f
+        var touchY = 0f
+        var moved = false
+
+        return View.OnTouchListener { _, event ->
+
+            when (event.action) {
+
+                MotionEvent.ACTION_DOWN -> {
+                    startX = params.x
+                    startY = params.y
+                    touchX = event.rawX
+                    touchY = event.rawY
+                    moved = false
+                    true
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+
+                    val dx = event.rawX - touchX
+                    val dy = event.rawY - touchY
+
+                    if (
+                        kotlin.math.abs(dx) > dp(5) ||
+                        kotlin.math.abs(dy) > dp(5)
+                    ) {
+                        moved = true
+                    }
+
+                    if (moved) {
+
+                        params.x = startX + dx.toInt()
+                        params.y = startY + dy.toInt()
+
+                        try {
+                            windowManager.updateViewLayout(
+                                view,
+                                params
+                            )
+                        } catch (_: Exception) {
+                        }
+                    }
+
+                    true
+                }
+
+                MotionEvent.ACTION_UP -> {
+
+                    bubbleX = params.x
+                    bubbleY = params.y
+
+                    if (!moved) {
+                        view.performClick()
+                    }
+
+                    true
+                }
+
+                MotionEvent.ACTION_CANCEL -> true
+
+                else -> false
+            }
+        }
+    }
+
+    // EXPANDED CONTROLS
+
+    private fun showExpandedControls() {
+
+        controlsExpanded = true
+
+        if (!createControls()) {
+            controlsExpanded = false
+
+            if (!showBubble()) {
+                stopAimFrame()
+            }
+        }
+    }
+
+    private fun createControls(): Boolean {
 
         removeControls()
 
@@ -373,16 +527,38 @@ class NethaXAimFrameService : Service() {
             val panel = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER
-                setPadding(dp(8), dp(5), dp(8), dp(5))
+                setPadding(
+                    dp(7),
+                    dp(5),
+                    dp(7),
+                    dp(5)
+                )
 
                 background = GradientDrawable().apply {
-                    setColor(Color.rgb(12, 24, 38))
-                    cornerRadius = dp(14).toFloat()
+                    setColor(Color.rgb(8, 17, 29))
+                    cornerRadius = dp(18).toFloat()
                     setStroke(dp(1), Color.CYAN)
+                }
+
+                elevation = dp(8).toFloat()
+            }
+
+            // COLLAPSE TO BALL
+
+            addControlButton(
+                panel,
+                "●",
+                Color.rgb(0, 170, 205),
+                true
+            ) {
+                controlsExpanded = false
+
+                if (!showBubble()) {
+                    stopAimFrame()
                 }
             }
 
-            if (minimized) {
+            if (isMinimized) {
 
                 addControlButton(
                     panel,
@@ -405,7 +581,7 @@ class NethaXAimFrameService : Service() {
                 addControlButton(
                     panel,
                     "CENTER",
-                    Color.rgb(0, 217, 255)
+                    Color.rgb(0, 190, 220)
                 ) {
                     centerAimFrame()
                 }
@@ -442,8 +618,9 @@ class NethaXAimFrameService : Service() {
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 android.graphics.PixelFormat.TRANSLUCENT
             ).apply {
-                gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-                y = dp(70)
+                gravity = Gravity.TOP or Gravity.START
+                x = bubbleX
+                y = bubbleY
             }
 
             windowManager.addView(panel, params)
@@ -454,7 +631,6 @@ class NethaXAimFrameService : Service() {
             true
 
         } catch (_: Exception) {
-
             removeControls()
             false
         }
@@ -464,18 +640,25 @@ class NethaXAimFrameService : Service() {
         panel: LinearLayout,
         label: String,
         backgroundColor: Int,
+        circular: Boolean = false,
         onClick: () -> Unit
     ) {
 
         val button = Button(this).apply {
+
             text = label
-            textSize = 10f
+            textSize = if (circular) 13f else 10f
             setTextColor(Color.WHITE)
             setAllCaps(false)
 
             background = GradientDrawable().apply {
+                if (circular) {
+                    shape = GradientDrawable.OVAL
+                } else {
+                    cornerRadius = dp(9).toFloat()
+                }
+
                 setColor(backgroundColor)
-                cornerRadius = dp(9).toFloat()
             }
 
             setPadding(
@@ -491,7 +674,11 @@ class NethaXAimFrameService : Service() {
         }
 
         val buttonParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
+            if (circular) {
+                dp(42)
+            } else {
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            },
             dp(42)
         ).apply {
             marginStart = dp(3)
@@ -525,13 +712,16 @@ class NethaXAimFrameService : Service() {
 
         hideFrame()
 
-        if (!createControls(true)) {
+        isMinimized = true
+        controlsExpanded = false
+
+        if (!showBubble()) {
             stopAimFrame()
             return
         }
 
-        isMinimized = true
         saveSettings()
+        broadcastCurrentState()
     }
 
     // RESTORE FRAME
@@ -550,15 +740,19 @@ class NethaXAimFrameService : Service() {
             return
         }
 
-        if (!createControls(false)) {
+        isMinimized = false
+        controlsExpanded = false
+
+        if (!showBubble()) {
             stopAimFrame()
             return
         }
 
-        isMinimized = false
         saveSettings()
         broadcastCurrentState()
     }
+
+    // REMOVE CONTROLS
 
     private fun removeControls() {
 
@@ -574,7 +768,9 @@ class NethaXAimFrameService : Service() {
     }
 
     private fun dp(value: Int): Int {
-        return (value * resources.displayMetrics.density).toInt()
+        return (
+            value * resources.displayMetrics.density
+        ).toInt()
     }
 
     // STOP SERVICE
@@ -585,6 +781,7 @@ class NethaXAimFrameService : Service() {
         removeControls()
 
         isMinimized = false
+        controlsExpanded = false
 
         setRunningStatus(false)
 
@@ -665,6 +862,7 @@ class NethaXAimFrameService : Service() {
         removeControls()
 
         isMinimized = false
+        controlsExpanded = false
 
         setRunningStatus(false)
 
@@ -708,8 +906,11 @@ class NethaXAimFrameService : Service() {
             val side = min(width, height).toFloat()
             val inset = 5f * resources.displayMetrics.density
 
-            framePaint.alpha = (255 * frameOpacity).toInt()
-            centerPaint.alpha = (255 * frameOpacity).toInt()
+            framePaint.alpha =
+                (255 * frameOpacity).toInt()
+
+            centerPaint.alpha =
+                (255 * frameOpacity).toInt()
 
             val rect = RectF(
                 inset,
