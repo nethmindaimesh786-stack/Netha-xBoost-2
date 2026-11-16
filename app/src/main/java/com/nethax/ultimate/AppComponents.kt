@@ -183,14 +183,14 @@ internal fun ToolPage(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     title,
-                    color = Color(0xFFD7C3FF),
+                    color = Color(0xFF17213D),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
 
                 Text(
                     subtitle,
-                    color = SoftText,
+                    color = Color(0xFF687895),
                     fontSize = 10.sp
                 )
             }
@@ -203,7 +203,7 @@ internal fun ToolPage(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 12.dp, bottom = 20.dp),
-            color = Color(0xFF716B8B),
+            color = Color(0xFF7A86A0),
             fontSize = 9.sp,
             letterSpacing = 1.2.sp,
             textAlign = TextAlign.Center
@@ -219,17 +219,17 @@ internal fun PanelCard(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(
-                elevation = 12.dp,
-                shape = RoundedCornerShape(18.dp),
-                spotColor = Purple
+                elevation = 8.dp,
+                shape = RoundedCornerShape(20.dp),
+                spotColor = Color(0x332479F2)
             )
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xF2222440),
-                        Color(0xF2142639),
-                        Color(0xF2112030)
+                        Color(0xFFFFFFFF),
+                        Color(0xFFF6F9FF),
+                        Color(0xFFF1F5FF)
                     )
                 )
             )
@@ -237,12 +237,12 @@ internal fun PanelCard(
                 width = 1.dp,
                 brush = Brush.linearGradient(
                     listOf(
-                        Color(0x779B78FF),
-                        Color(0x5535EAFF),
-                        Color(0x665C6FAD)
+                        Color(0xFFD4E5FF),
+                        Color(0xFFE3D9FF),
+                        Color(0xFFDCE8F8)
                     )
                 ),
-                shape = RoundedCornerShape(18.dp)
+                shape = RoundedCornerShape(20.dp)
             )
             .padding(15.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -276,23 +276,23 @@ internal fun GradientActionButton(
             .shadow(
                 elevation = if (enabled) 13.dp else 2.dp,
                 shape = RoundedCornerShape(12.dp),
-                spotColor = if (enabled) Cyan else Color.Transparent
+                spotColor = if (enabled) Color(0x332479F2) else Color.Transparent
             )
             .clip(RoundedCornerShape(12.dp))
             .background(
                 if (enabled) {
                     Brush.linearGradient(
                         listOf(
-                            Color(0xFFAD65FF),
-                            Color(0xFF5575FF),
-                            Color(0xFF00CFFF)
+                            Color(0xFF8A5CF6),
+                            Color(0xFF4B83F2),
+                            Color(0xFF32B8E8)
                         )
                     )
                 } else {
                     Brush.linearGradient(
                         listOf(
-                            Color(0xFF55516D),
-                            Color(0xFF45475B)
+                            Color(0xFFB9C3D4),
+                            Color(0xFFAAB6C9)
                         )
                     )
                 }
@@ -331,11 +331,16 @@ internal fun GradientActionButton(
 @Composable
 internal fun StatusText(
     text: String,
-    color: Color = Cyan
+    color: Color = Color(0xFF2479F2)
 ) {
+    val readableColor = when (color) {
+        Cyan, SoftText -> Color(0xFF687895)
+        Green -> Color(0xFF16875A)
+        else -> color
+    }
     Text(
         text,
-        color = color,
+        color = readableColor,
         fontSize = 11.sp,
         textAlign = TextAlign.Center,
         lineHeight = 16.sp,
