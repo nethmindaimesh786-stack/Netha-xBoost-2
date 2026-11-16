@@ -15,6 +15,7 @@ import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.BatteryManager
 import android.os.Build
@@ -27,6 +28,7 @@ import android.provider.Settings
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -35,12 +37,8 @@ import java.util.Locale
 class GamingFloatingHUDService : Service() {
 
     companion object {
-
-        const val ACTION_START =
-            "com.nethax.ultimate.GAMING_HUD_START"
-
-        const val ACTION_STOP =
-            "com.nethax.ultimate.GAMING_HUD_STOP"
+        const val ACTION_START = "com.nethax.ultimate.GAMING_HUD_START"
+        const val ACTION_STOP = "com.nethax.ultimate.GAMING_HUD_STOP"
 
         const val PREFS_NAME = "gaming_hud_prefs"
         const val PREF_SELECTED_GAME = "selected_game_package"
@@ -54,14 +52,20 @@ class GamingFloatingHUDService : Service() {
         private const val UPDATE_INTERVAL = 1000L
     }
 
-    private lateinit var prefs:
-        android.content.SharedPreferences
-
+    private lateinit var prefs: android.content.SharedPreferences
     private lateinit var windowManager: WindowManager
 
     private val handler = Handler(Looper.getMainLooper())
 
+    // Full HUD and minimized circle
     private var hudView: LinearLayout? = null
+    private var miniView: TextView? = null
+
+    private var hudParams: WindowManager.LayoutParams? = null
+    private var miniParams: WindowManager.LayoutParams? = null
+
+    private var hudAttached = false
+    private var miniAttached = false
 
     private var batteryPercent = 0
     private var batteryTemperature = 0f
@@ -85,21 +89,14 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private val updateTask = object : Runnable {
-
         override fun run() {
-
             if (!isRunning) return
 
             checkSelectedGame()
-
             updateSavedState()
-
             updateHUD()
 
-            handler.postDelayed(
-                this,
-                UPDATE_INTERVAL
-            )
+            handler.postDelayed(this, UPDATE_INTERVAL)
         }
     }
 
@@ -110,10 +107,7 @@ class GamingFloatingHUDService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        prefs = getSharedPreferences(
-            PREFS_NAME,
-            MODE_PRIVATE
-        )
+        prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
 
         windowManager = getSystemService(
             WINDOW_SERVICE
@@ -124,18 +118,10 @@ class GamingFloatingHUDService : Service() {
             null
         )
 
-        batteryPercent = prefs.getInt(
-            "battery_percent",
-            0
-        )
-
-        batteryTemperature = prefs.getFloat(
-            "battery_temperature",
-            0f
-        )
+        batteryPercent = prefs.getInt("battery_percent", 0)
+        batteryTemperature = prefs.getFloat("battery_temperature", 0f)
 
         createNotificationChannel()
-
         registerBatteryReceiver()
     }
 
@@ -150,16 +136,12 @@ class GamingFloatingHUDService : Service() {
     ): Int {
 
         when (intent?.action) {
-
             ACTION_STOP -> {
-
                 stopSelf()
-
                 return START_NOT_STICKY
             }
 
             ACTION_START -> {
-
                 if (!isRunning) {
                     startHUDService()
                 }
@@ -174,21 +156,16 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private fun startHUDService() {
-
         try {
-
             val notification = createNotification()
 
             if (Build.VERSION.SDK_INT >= 34) {
-
                 startForeground(
                     NOTIFICATION_ID,
                     notification,
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
                 )
-
             } else {
-
                 startForeground(
                     NOTIFICATION_ID,
                     notification
@@ -196,18 +173,13 @@ class GamingFloatingHUDService : Service() {
             }
 
         } catch (_: Exception) {
-
             prefs.edit()
                 .putBoolean(PREF_HUD_RUNNING, false)
                 .putBoolean(PREF_GAME_RUNNING, false)
-                .putString(
-                    PREF_STATUS,
-                    "SERVICE START FAILED"
-                )
+                .putString(PREF_STATUS, "SERVICE START FAILED")
                 .apply()
 
             stopSelf()
-
             return
         }
 
@@ -216,7 +188,6 @@ class GamingFloatingHUDService : Service() {
         playTimeMs = 0L
         gameStartElapsed = 0L
         gameRunning = false
-
         foregroundPackage = null
 
         selectedGamePackage = prefs.getString(
@@ -231,23 +202,16 @@ class GamingFloatingHUDService : Service() {
             .putLong(PREF_PLAY_TIME, 0L)
             .putBoolean(PREF_GAME_RUNNING, false)
             .putBoolean(PREF_HUD_RUNNING, true)
-            .putString(
-                PREF_STATUS,
-                "WAITING FOR GAME"
-            )
+            .putString(PREF_STATUS, "WAITING FOR GAME")
             .apply()
 
         if (Settings.canDrawOverlays(this)) {
-
             addOverlay()
-
         } else {
-
             saveStatus("OVERLAY PERMISSION REQUIRED")
         }
 
         handler.removeCallbacks(updateTask)
-
         handler.post(updateTask)
     }
 
@@ -256,17 +220,13 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private fun createNotificationChannel() {
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Gaming Floating HUD",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-
-                description =
-                    "Gaming performance monitor"
+                description = "Gaming performance monitor"
             }
 
             getSystemService(
@@ -280,12 +240,10 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private fun createNotification(): Notification {
-
         val stopIntent = Intent(
             this,
             GamingFloatingHUDService::class.java
         ).apply {
-
             action = ACTION_STOP
         }
 
@@ -298,23 +256,15 @@ class GamingFloatingHUDService : Service() {
         )
 
         val builder = if (Build.VERSION.SDK_INT >= 26) {
-
-            Notification.Builder(
-                this,
-                CHANNEL_ID
-            )
-
+            Notification.Builder(this, CHANNEL_ID)
         } else {
-
             Notification.Builder(this)
         }
 
         return builder
             .setSmallIcon(android.R.drawable.ic_menu_view)
             .setContentTitle("NETHA X ULTIMATE")
-            .setContentText(
-                "Gaming Floating HUD is running"
-            )
+            .setContentText("Gaming Floating HUD is running")
             .setOngoing(true)
             .addAction(
                 android.R.drawable.ic_media_pause,
@@ -329,18 +279,14 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private fun registerBatteryReceiver() {
-
         batteryReceiver = object : BroadcastReceiver() {
-
             override fun onReceive(
                 context: Context?,
                 intent: Intent?
             ) {
-
-                if (
-                    intent?.action !=
-                    Intent.ACTION_BATTERY_CHANGED
-                ) return
+                if (intent?.action != Intent.ACTION_BATTERY_CHANGED) {
+                    return
+                }
 
                 val level = intent.getIntExtra(
                     BatteryManager.EXTRA_LEVEL,
@@ -353,9 +299,7 @@ class GamingFloatingHUDService : Service() {
                 )
 
                 if (level >= 0 && scale > 0) {
-
-                    batteryPercent =
-                        (level * 100) / scale
+                    batteryPercent = (level * 100) / scale
                 }
 
                 val temperature = intent.getIntExtra(
@@ -371,39 +315,25 @@ class GamingFloatingHUDService : Service() {
                     }
 
                 prefs.edit()
-                    .putInt(
-                        "battery_percent",
-                        batteryPercent
-                    )
-                    .putFloat(
-                        "battery_temperature",
-                        batteryTemperature
-                    )
+                    .putInt("battery_percent", batteryPercent)
+                    .putFloat("battery_temperature", batteryTemperature)
                     .apply()
 
                 updateHUD()
             }
         }
 
-        val filter = IntentFilter(
-            Intent.ACTION_BATTERY_CHANGED
-        )
+        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 
         if (Build.VERSION.SDK_INT >= 33) {
-
             registerReceiver(
                 batteryReceiver,
                 filter,
                 Context.RECEIVER_NOT_EXPORTED
             )
-
         } else {
-
             @Suppress("DEPRECATION")
-            registerReceiver(
-                batteryReceiver,
-                filter
-            )
+            registerReceiver(batteryReceiver, filter)
         }
 
         receiverRegistered = true
@@ -414,24 +344,19 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private fun hasUsageAccess(): Boolean {
-
         return try {
-
             val appOps = getSystemService(
                 APP_OPS_SERVICE
             ) as AppOpsManager
 
             val mode =
                 if (Build.VERSION.SDK_INT >= 29) {
-
                     appOps.unsafeCheckOpNoThrow(
                         AppOpsManager.OPSTR_GET_USAGE_STATS,
                         Process.myUid(),
                         packageName
                     )
-
                 } else {
-
                     @Suppress("DEPRECATION")
                     appOps.checkOpNoThrow(
                         AppOpsManager.OPSTR_GET_USAGE_STATS,
@@ -443,7 +368,6 @@ class GamingFloatingHUDService : Service() {
             mode == AppOpsManager.MODE_ALLOWED
 
         } catch (_: Exception) {
-
             false
         }
     }
@@ -453,21 +377,17 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private fun checkSelectedGame() {
-
         val latestSelectedGame = prefs.getString(
             PREF_SELECTED_GAME,
             null
         )
 
-        // Detect game selection changes.
         if (latestSelectedGame != selectedGamePackage) {
-
             selectedGamePackage = latestSelectedGame
 
             playTimeMs = 0L
             gameStartElapsed = 0L
             gameRunning = false
-
             foregroundPackage = null
 
             lastUsageQueryTime =
@@ -477,29 +397,21 @@ class GamingFloatingHUDService : Service() {
         }
 
         if (selectedGamePackage.isNullOrBlank()) {
-
             pauseGameTimer()
-
             saveStatus("SELECT A GAME FIRST")
-
             return
         }
 
         if (!hasUsageAccess()) {
-
             pauseGameTimer()
-
             saveStatus("USAGE ACCESS REQUIRED")
-
             return
         }
 
         try {
-
-            val usageStatsManager =
-                getSystemService(
-                    USAGE_STATS_SERVICE
-                ) as UsageStatsManager
+            val usageStatsManager = getSystemService(
+                USAGE_STATS_SERVICE
+            ) as UsageStatsManager
 
             val currentTime = System.currentTimeMillis()
 
@@ -511,7 +423,6 @@ class GamingFloatingHUDService : Service() {
             val event = UsageEvents.Event()
 
             while (events.hasNextEvent()) {
-
                 events.getNextEvent(event)
 
                 val eventPackage =
@@ -521,15 +432,12 @@ class GamingFloatingHUDService : Service() {
                 val pausedEvent: Int
 
                 if (Build.VERSION.SDK_INT >= 29) {
-
                     resumedEvent =
                         UsageEvents.Event.ACTIVITY_RESUMED
 
                     pausedEvent =
                         UsageEvents.Event.ACTIVITY_PAUSED
-
                 } else {
-
                     @Suppress("DEPRECATION")
                     val oldResumed =
                         UsageEvents.Event.MOVE_TO_FOREGROUND
@@ -543,30 +451,18 @@ class GamingFloatingHUDService : Service() {
                 }
 
                 when (event.eventType) {
-
                     resumedEvent -> {
-
                         foregroundPackage = eventPackage
                     }
 
                     pausedEvent -> {
-
-                        if (
-                            foregroundPackage ==
-                            eventPackage
-                        ) {
-
+                        if (foregroundPackage == eventPackage) {
                             foregroundPackage = null
                         }
                     }
 
                     UsageEvents.Event.ACTIVITY_STOPPED -> {
-
-                        if (
-                            foregroundPackage ==
-                            eventPackage
-                        ) {
-
+                        if (foregroundPackage == eventPackage) {
                             foregroundPackage = null
                         }
                     }
@@ -575,26 +471,16 @@ class GamingFloatingHUDService : Service() {
 
             lastUsageQueryTime = currentTime
 
-            if (
-                foregroundPackage ==
-                selectedGamePackage
-            ) {
-
+            if (foregroundPackage == selectedGamePackage) {
                 resumeGameTimer()
-
                 saveStatus("SELECTED GAME ACTIVE")
-
             } else {
-
                 pauseGameTimer()
-
                 saveStatus("WAITING FOR SELECTED GAME")
             }
 
         } catch (_: Exception) {
-
             pauseGameTimer()
-
             saveStatus("GAME DETECTION FAILED")
         }
     }
@@ -604,14 +490,9 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private fun resumeGameTimer() {
-
         if (!gameRunning) {
-
             gameRunning = true
-
-            gameStartElapsed =
-                SystemClock.elapsedRealtime()
-
+            gameStartElapsed = SystemClock.elapsedRealtime()
             saveTimerState()
         }
     }
@@ -621,17 +502,13 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private fun pauseGameTimer() {
-
         if (gameRunning) {
-
             val elapsed =
-                SystemClock.elapsedRealtime() -
-                    gameStartElapsed
+                SystemClock.elapsedRealtime() - gameStartElapsed
 
             playTimeMs += elapsed.coerceAtLeast(0L)
 
             gameRunning = false
-
             gameStartElapsed = 0L
 
             saveTimerState()
@@ -643,17 +520,13 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private fun getCurrentPlayTime(): Long {
-
         return if (gameRunning) {
-
             playTimeMs +
                 (
                     SystemClock.elapsedRealtime() -
                         gameStartElapsed
                     ).coerceAtLeast(0L)
-
         } else {
-
             playTimeMs
         }
     }
@@ -663,44 +536,23 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private fun saveTimerState() {
-
         prefs.edit()
-            .putLong(
-                PREF_PLAY_TIME,
-                getCurrentPlayTime()
-            )
-            .putBoolean(
-                PREF_GAME_RUNNING,
-                gameRunning
-            )
+            .putLong(PREF_PLAY_TIME, getCurrentPlayTime())
+            .putBoolean(PREF_GAME_RUNNING, gameRunning)
             .apply()
     }
 
     private fun saveStatus(status: String) {
-
         prefs.edit()
-            .putString(
-                PREF_STATUS,
-                status
-            )
+            .putString(PREF_STATUS, status)
             .apply()
     }
 
     private fun updateSavedState() {
-
         prefs.edit()
-            .putLong(
-                PREF_PLAY_TIME,
-                getCurrentPlayTime()
-            )
-            .putBoolean(
-                PREF_GAME_RUNNING,
-                gameRunning
-            )
-            .putBoolean(
-                PREF_HUD_RUNNING,
-                isRunning
-            )
+            .putLong(PREF_PLAY_TIME, getCurrentPlayTime())
+            .putBoolean(PREF_GAME_RUNNING, gameRunning)
+            .putBoolean(PREF_HUD_RUNNING, isRunning)
             .apply()
     }
 
@@ -709,14 +561,12 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private fun addOverlay() {
-
         if (
             hudView != null ||
             !Settings.canDrawOverlays(this)
         ) return
 
         val container = LinearLayout(this).apply {
-
             orientation = LinearLayout.VERTICAL
 
             setPadding(
@@ -727,67 +577,65 @@ class GamingFloatingHUDService : Service() {
             )
 
             background = GradientDrawable().apply {
-
-                setColor(
-                    Color.argb(230, 8, 16, 25)
-                )
-
-                cornerRadius =
-                    dp(12).toFloat()
-
-                setStroke(
-                    dp(1),
-                    Color.rgb(0, 217, 255)
-                )
+                setColor(Color.argb(230, 8, 16, 25))
+                cornerRadius = dp(12).toFloat()
+                setStroke(dp(1), Color.rgb(0, 217, 255))
             }
         }
 
         val headerRow = LinearLayout(this).apply {
-
             orientation = LinearLayout.HORIZONTAL
-
             gravity = Gravity.CENTER_VERTICAL
         }
 
         // Drag handle
         val dragHandle = TextView(this).apply {
-
             text = "NETHA HUD"
-
             textSize = 13f
-
-            setTextColor(
-                Color.rgb(0, 217, 255)
-            )
+            setTextColor(Color.rgb(0, 217, 255))
 
             setPadding(
                 0,
                 0,
-                dp(16),
+                dp(12),
                 dp(5)
             )
         }
 
-        // Separate close button
-        val closeButton = TextView(this).apply {
-
-            text = "×"
-
-            textSize = 22f
-
+        // Minimize button
+        val minimizeButton = TextView(this).apply {
+            text = "−"
+            textSize = 23f
             setTextColor(Color.WHITE)
-
             gravity = Gravity.CENTER
 
             setPadding(
-                dp(8),
+                dp(5),
+                0,
+                dp(5),
+                dp(5)
+            )
+
+            setOnClickListener {
+                minimizeOverlay()
+            }
+        }
+
+        // Close button
+        val closeButton = TextView(this).apply {
+            text = "×"
+            textSize = 22f
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+
+            setPadding(
+                dp(5),
                 0,
                 dp(4),
                 dp(5)
             )
 
             setOnClickListener {
-
                 stopSelf()
             }
         }
@@ -802,17 +650,23 @@ class GamingFloatingHUDService : Service() {
         )
 
         headerRow.addView(
+            minimizeButton,
+            LinearLayout.LayoutParams(
+                dp(30),
+                dp(30)
+            )
+        )
+
+        headerRow.addView(
             closeButton,
             LinearLayout.LayoutParams(
-                dp(32),
+                dp(30),
                 dp(30)
             )
         )
 
         val details = TextView(this).apply {
-
             textSize = 12f
-
             setTextColor(Color.WHITE)
 
             setLineSpacing(
@@ -824,7 +678,6 @@ class GamingFloatingHUDService : Service() {
         }
 
         container.addView(headerRow)
-
         container.addView(details)
 
         val params = WindowManager.LayoutParams(
@@ -835,22 +688,16 @@ class GamingFloatingHUDService : Service() {
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
         ).apply {
-
-            gravity =
-                Gravity.TOP or Gravity.START
-
+            gravity = Gravity.TOP or Gravity.START
             x = dp(12)
-
             y = dp(120)
         }
 
-        // Drag only from header title.
+        // Drag full HUD from title
         dragHandle.setOnTouchListener(
             object : View.OnTouchListener {
-
                 private var initialX = 0
                 private var initialY = 0
-
                 private var initialTouchX = 0f
                 private var initialTouchY = 0f
 
@@ -858,43 +705,27 @@ class GamingFloatingHUDService : Service() {
                     view: View,
                     event: MotionEvent
                 ): Boolean {
-
                     when (event.action) {
-
                         MotionEvent.ACTION_DOWN -> {
-
                             initialX = params.x
                             initialY = params.y
-
                             initialTouchX = event.rawX
                             initialTouchY = event.rawY
-
                             return true
                         }
 
                         MotionEvent.ACTION_MOVE -> {
+                            params.x = initialX +
+                                (event.rawX - initialTouchX).toInt()
 
-                            params.x =
-                                initialX +
-                                    (
-                                        event.rawX -
-                                            initialTouchX
-                                        ).toInt()
-
-                            params.y =
-                                initialY +
-                                    (
-                                        event.rawY -
-                                            initialTouchY
-                                        ).toInt()
+                            params.y = initialY +
+                                (event.rawY - initialTouchY).toInt()
 
                             try {
-
                                 windowManager.updateViewLayout(
                                     container,
                                     params
                                 )
-
                             } catch (_: Exception) {
                             }
 
@@ -903,7 +734,6 @@ class GamingFloatingHUDService : Service() {
 
                         MotionEvent.ACTION_UP,
                         MotionEvent.ACTION_CANCEL -> {
-
                             return true
                         }
                     }
@@ -914,22 +744,201 @@ class GamingFloatingHUDService : Service() {
         )
 
         try {
-
-            windowManager.addView(
-                container,
-                params
-            )
+            windowManager.addView(container, params)
 
             hudView = container
+            hudParams = params
+            hudAttached = true
 
             updateHUD()
 
         } catch (_: Exception) {
-
             hudView = null
+            hudParams = null
+            hudAttached = false
 
             saveStatus("OVERLAY DISPLAY FAILED")
         }
+    }
+
+    // --------------------------------------------------
+    // MINIMIZE HUD TO CIRCLE
+    // --------------------------------------------------
+
+    private fun minimizeOverlay() {
+        val fullView = hudView ?: return
+        val fullParams = hudParams ?: return
+
+        if (!hudAttached || miniView != null) return
+
+        val circle = TextView(this).apply {
+            text = "N"
+            textSize = 20f
+            setTypeface(null, Typeface.BOLD)
+            setTextColor(Color.rgb(0, 217, 255))
+            gravity = Gravity.CENTER
+
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.argb(235, 8, 16, 25))
+                setStroke(dp(2), Color.rgb(0, 217, 255))
+            }
+        }
+
+        val circleParams = WindowManager.LayoutParams(
+            dp(52),
+            dp(52),
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            x = fullParams.x
+            y = fullParams.y
+        }
+
+        // Tap to restore; drag to move the circle
+        circle.setOnTouchListener(
+            object : View.OnTouchListener {
+                private var initialX = 0
+                private var initialY = 0
+                private var initialTouchX = 0f
+                private var initialTouchY = 0f
+                private var moved = false
+
+                private val touchSlop =
+                    ViewConfiguration.get(this@GamingFloatingHUDService)
+                        .scaledTouchSlop
+
+                override fun onTouch(
+                    view: View,
+                    event: MotionEvent
+                ): Boolean {
+                    when (event.action) {
+                        MotionEvent.ACTION_DOWN -> {
+                            initialX = circleParams.x
+                            initialY = circleParams.y
+
+                            initialTouchX = event.rawX
+                            initialTouchY = event.rawY
+
+                            moved = false
+                            return true
+                        }
+
+                        MotionEvent.ACTION_MOVE -> {
+                            val dx = event.rawX - initialTouchX
+                            val dy = event.rawY - initialTouchY
+
+                            if (
+                                kotlin.math.abs(dx) > touchSlop ||
+                                kotlin.math.abs(dy) > touchSlop
+                            ) {
+                                moved = true
+                            }
+
+                            if (moved) {
+                                circleParams.x =
+                                    initialX + dx.toInt()
+
+                                circleParams.y =
+                                    initialY + dy.toInt()
+
+                                try {
+                                    windowManager.updateViewLayout(
+                                        circle,
+                                        circleParams
+                                    )
+                                } catch (_: Exception) {
+                                }
+                            }
+
+                            return true
+                        }
+
+                        MotionEvent.ACTION_UP -> {
+                            if (!moved) {
+                                restoreOverlay()
+                            }
+                            return true
+                        }
+
+                        MotionEvent.ACTION_CANCEL -> {
+                            return true
+                        }
+                    }
+
+                    return false
+                }
+            }
+        )
+
+        try {
+            // Add circle first, then remove full HUD
+            windowManager.addView(circle, circleParams)
+
+            miniView = circle
+            miniParams = circleParams
+            miniAttached = true
+
+            try {
+                windowManager.removeView(fullView)
+                hudAttached = false
+            } catch (_: Exception) {
+                removeMiniView()
+                saveStatus("HUD MINIMIZE FAILED")
+            }
+
+        } catch (_: Exception) {
+            miniView = null
+            miniParams = null
+            miniAttached = false
+
+            saveStatus("MINIMIZE FAILED")
+        }
+    }
+
+    // --------------------------------------------------
+    // RESTORE FULL HUD
+    // --------------------------------------------------
+
+    private fun restoreOverlay() {
+        val fullView = hudView ?: return
+        val fullParams = hudParams ?: return
+
+        removeMiniView()
+
+        if (hudAttached) return
+
+        try {
+            windowManager.addView(fullView, fullParams)
+            hudAttached = true
+            updateHUD()
+
+        } catch (_: Exception) {
+            hudAttached = false
+            saveStatus("HUD RESTORE FAILED")
+        }
+    }
+
+    // --------------------------------------------------
+    // REMOVE MINI CIRCLE
+    // --------------------------------------------------
+
+    private fun removeMiniView() {
+        val view = miniView ?: return
+
+        if (miniAttached) {
+            try {
+                windowManager.removeView(view)
+            } catch (_: Exception) {
+            }
+        }
+
+        miniView = null
+        miniParams = null
+        miniAttached = false
     }
 
     // --------------------------------------------------
@@ -937,35 +946,25 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private fun updateHUD() {
-
         val view = hudView ?: return
 
         val details = view.findViewWithTag<TextView>(
             "hud_details"
         ) ?: return
 
-        val time = formatTime(
-            getCurrentPlayTime()
-        )
+        val time = formatTime(getCurrentPlayTime())
 
         val gameState =
-            if (gameRunning) {
-                "PLAYING"
-            } else {
-                "PAUSED"
-            }
+            if (gameRunning) "PLAYING" else "PAUSED"
 
         val temperatureText =
             if (batteryTemperature > 0f) {
-
                 String.format(
                     Locale.US,
                     "%.1f°C",
                     batteryTemperature
                 )
-
             } else {
-
                 "N/A"
             }
 
@@ -979,42 +978,36 @@ class GamingFloatingHUDService : Service() {
     }
 
     // --------------------------------------------------
-    // REMOVE OVERLAY
+    // REMOVE ALL OVERLAYS
     // --------------------------------------------------
 
     private fun removeOverlay() {
+        removeMiniView()
 
-        val view = hudView ?: return
+        val view = hudView
 
-        try {
-
-            windowManager.removeView(view)
-
-        } catch (_: Exception) {
+        if (view != null && hudAttached) {
+            try {
+                windowManager.removeView(view)
+            } catch (_: Exception) {
+            }
         }
 
         hudView = null
+        hudParams = null
+        hudAttached = false
     }
 
     // --------------------------------------------------
     // TIME FORMAT
     // --------------------------------------------------
 
-    private fun formatTime(
-        milliseconds: Long
-    ): String {
+    private fun formatTime(milliseconds: Long): String {
+        val totalSeconds = milliseconds / 1000L
 
-        val totalSeconds =
-            milliseconds / 1000L
-
-        val hours =
-            totalSeconds / 3600L
-
-        val minutes =
-            (totalSeconds % 3600L) / 60L
-
-        val seconds =
-            totalSeconds % 60L
+        val hours = totalSeconds / 3600L
+        val minutes = (totalSeconds % 3600L) / 60L
+        val seconds = totalSeconds % 60L
 
         return String.format(
             Locale.US,
@@ -1030,11 +1023,9 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     private fun dp(value: Int): Int {
-
         return (
-            value *
-                resources.displayMetrics.density
-            ).toInt()
+            value * resources.displayMetrics.density
+        ).toInt()
     }
 
     // --------------------------------------------------
@@ -1042,42 +1033,23 @@ class GamingFloatingHUDService : Service() {
     // --------------------------------------------------
 
     override fun onDestroy() {
-
         handler.removeCallbacks(updateTask)
 
         pauseGameTimer()
-
         isRunning = false
 
         prefs.edit()
-            .putLong(
-                PREF_PLAY_TIME,
-                getCurrentPlayTime()
-            )
-            .putBoolean(
-                PREF_HUD_RUNNING,
-                false
-            )
-            .putBoolean(
-                PREF_GAME_RUNNING,
-                false
-            )
-            .putString(
-                PREF_STATUS,
-                "HUD STOPPED"
-            )
+            .putLong(PREF_PLAY_TIME, getCurrentPlayTime())
+            .putBoolean(PREF_HUD_RUNNING, false)
+            .putBoolean(PREF_GAME_RUNNING, false)
+            .putString(PREF_STATUS, "HUD STOPPED")
             .apply()
 
         removeOverlay()
 
         if (receiverRegistered) {
-
             try {
-
-                unregisterReceiver(
-                    batteryReceiver
-                )
-
+                unregisterReceiver(batteryReceiver)
             } catch (_: Exception) {
             }
 
@@ -1089,7 +1061,5 @@ class GamingFloatingHUDService : Service() {
         super.onDestroy()
     }
 
-    override fun onBind(
-        intent: Intent?
-    ): IBinder? = null
+    override fun onBind(intent: Intent?): IBinder? = null
 }
