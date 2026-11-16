@@ -20,6 +20,8 @@ import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.text.Html
 import android.util.Size
+import android.view.View
+import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -82,6 +84,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -149,15 +152,36 @@ class MainActivity : ComponentActivity() {
         window.decorView.systemUiVisibility = 0
 
         setContent {
-            NethaApp()
+            NethaApp(window)
         }
     }
 }
 
 @Composable
-private fun NethaApp() {
+private fun NethaApp(window: Window) {
     var currentScreen by rememberSaveable { mutableStateOf("home") }
     var splashVisible by rememberSaveable { mutableStateOf(true) }
+
+    SideEffect {
+        val lightDashboard = !splashVisible && currentScreen == "home"
+        window.statusBarColor = if (lightDashboard) {
+            android.graphics.Color.rgb(245, 248, 255)
+        } else {
+            android.graphics.Color.rgb(7, 7, 19)
+        }
+        window.navigationBarColor = if (lightDashboard) {
+            android.graphics.Color.rgb(245, 248, 255)
+        } else {
+            android.graphics.Color.rgb(7, 7, 19)
+        }
+
+        @Suppress("DEPRECATION")
+        window.decorView.systemUiVisibility = if (lightDashboard) {
+            View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+        } else {
+            0
+        }
+    }
 
     LaunchedEffect(Unit) {
         delay(3700)
@@ -183,10 +207,14 @@ private fun NethaApp() {
     } else {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = Bg
+            color = if (currentScreen == "home") Color(0xFFF5F8FF) else Bg
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                AppBackdrop()
+                if (currentScreen == "home") {
+                    LightDashboardBackdrop()
+                } else {
+                    AppBackdrop()
+                }
 
                 AnimatedContent(
                     modifier = Modifier
@@ -494,6 +522,63 @@ private fun AppBackdrop() {
                     Brush.radialGradient(
                         listOf(
                             Color(0xFF655BFF),
+                            Color.Transparent
+                        )
+                    ),
+                    CircleShape
+                )
+        )
+    }
+}
+
+
+@Composable
+private fun LightDashboardBackdrop() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFFF8FBFF),
+                        Color(0xFFEFF6FF),
+                        Color(0xFFF8F4FF),
+                        Color(0xFFFFFAFD)
+                    ),
+                    start = Offset.Zero,
+                    end = Offset(1100f, 1900f)
+                )
+            )
+    ) {
+        Box(
+            modifier = Modifier
+                .size(300.dp)
+                .align(Alignment.TopEnd)
+                .offset(x = 110.dp, y = (-100).dp)
+                .graphicsLayer { alpha = 0.34f }
+                .background(
+                    Brush.radialGradient(
+                        listOf(
+                            Color(0xFFB6DFFF),
+                            Color(0x55D7D0FF),
+                            Color.Transparent
+                        )
+                    ),
+                    CircleShape
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .size(320.dp)
+                .align(Alignment.BottomStart)
+                .offset(x = (-150).dp, y = 110.dp)
+                .graphicsLayer { alpha = 0.28f }
+                .background(
+                    Brush.radialGradient(
+                        listOf(
+                            Color(0xFFFFDDF2),
+                            Color(0x66E4D7FF),
                             Color.Transparent
                         )
                     ),
