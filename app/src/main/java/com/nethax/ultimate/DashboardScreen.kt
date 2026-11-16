@@ -132,6 +132,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 
+@Composable
 internal fun DashboardScreen(
     onBackground: () -> Unit,
     onTranslation: () -> Unit,
@@ -683,4 +684,3 @@ private fun ExperiencePanel() {
     }
 }
 
-@Composable
