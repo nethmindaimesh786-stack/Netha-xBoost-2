@@ -132,6 +132,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 
+@Composable
 internal fun TranslationCameraScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -664,4 +665,3 @@ private class TextFrameAnalyzer(
     }
 }
 
-@Composable
