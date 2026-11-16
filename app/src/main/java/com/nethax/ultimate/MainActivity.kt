@@ -134,10 +134,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 private val Bg = Color(0xFF070713)
 private val Panel = Color(0xFF11182B)
 private val Purple = Color(0xFF9B5CFF)
-private val Cyan = Color(0xFF35EAFF)
-private val SoftText = Color(0xFFAAA9C1)
-private val MainText = Color(0xFFF7F4FF)
-private val Green = Color(0xFF00FFAE)
+internal val Cyan = Color(0xFF35EAFF)
+internal val SoftText = Color(0xFFAAA9C1)
+internal val MainText = Color(0xFFF7F4FF)
+internal val Green = Color(0xFF00FFAE)
 private val PanelBorder = Color(0x665C6FAD)
 
 class MainActivity : ComponentActivity() {
@@ -216,12 +216,17 @@ private fun NethaApp() {
                             onBack = { currentScreen = "home" }
                         )
 
+                        "file_rescue" -> SmartFileRescueScreen(
+                            onBack = { currentScreen = "home" }
+                        )
+
                         else -> DashboardScreen(
                             onBackground = { currentScreen = "background" },
                             onTranslation = { currentScreen = "translation" },
                             onOptimizer = { currentScreen = "optimizer" },
                             onNetworkSpeed = { currentScreen = "network" },
-                            onBlackbox = { currentScreen = "blackbox" }
+                            onBlackbox = { currentScreen = "blackbox" },
+                            onFileRescue = { currentScreen = "file_rescue" }
                         )
                     }
                 }
@@ -494,7 +499,8 @@ private fun DashboardScreen(
     onTranslation: () -> Unit,
     onOptimizer: () -> Unit,
     onNetworkSpeed: () -> Unit,
-    onBlackbox: () -> Unit
+    onBlackbox: () -> Unit,
+    onFileRescue: () -> Unit
 ) {
     var dashboardVisible by remember { mutableStateOf(false) }
 
@@ -651,7 +657,15 @@ private fun DashboardScreen(
                 onClick = onBlackbox
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            FeatureCard(
+                modifier = Modifier.weight(1f),
+                icon = "📁",
+                title = "SMART FILE RESCUE",
+                description = "Scan • Organize • Recover",
+                action = "OPEN FILE RESCUE  →",
+                animationDelayMillis = 520L,
+                onClick = onFileRescue
+            )
         }
 
         Text(
@@ -1032,7 +1046,7 @@ private fun ExperiencePanel() {
 }
 
 @Composable
-private fun ToolPage(
+internal fun ToolPage(
     title: String,
     subtitle: String,
     onBack: () -> Unit,
@@ -1111,7 +1125,7 @@ private fun ToolPage(
 }
 
 @Composable
-private fun PanelCard(
+internal fun PanelCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
@@ -1150,7 +1164,7 @@ private fun PanelCard(
 }
 
 @Composable
-private fun GradientActionButton(
+internal fun GradientActionButton(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
@@ -1228,7 +1242,7 @@ private fun GradientActionButton(
 }
 
 @Composable
-private fun StatusText(
+internal fun StatusText(
     text: String,
     color: Color = Cyan
 ) {
