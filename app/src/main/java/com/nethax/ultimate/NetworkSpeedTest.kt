@@ -715,4 +715,3 @@ private suspend fun measureCloudflareUpload(
         connection.disconnect()
     }
 }
-@Composable
