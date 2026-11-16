@@ -1,14 +1,16 @@
 package com.nethax.ultimate
 
+import android.app.ActivityManager
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
+import android.os.Build
+import android.os.Environment
+import android.os.StatFs
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,13 +26,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,9 +45,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -54,7 +54,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
 import kotlinx.coroutines.delay
+
+private val DashboardInk = Color(0xFF17213D)
+private val DashboardMuted = Color(0xFF687895)
+private val DashboardBlue = Color(0xFF2479F2)
+private val DashboardPurple = Color(0xFF8054E9)
+private val DashboardTeal = Color(0xFF0BAA9B)
+private val DashboardPink = Color(0xFFE65DAF)
+private val DashboardOrange = Color(0xFFE79A28)
+private val DashboardCard = Color(0xFFFFFFFF)
 
 @Composable
 internal fun DashboardScreen(
@@ -68,6 +78,8 @@ internal fun DashboardScreen(
     onAimFrame: () -> Unit
 ) {
     var dashboardVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val deviceSnapshot = remember(context) { readDeviceSnapshot(context) }
 
     LaunchedEffect(Unit) {
         dashboardVisible = true
@@ -75,13 +87,13 @@ internal fun DashboardScreen(
 
     val dashboardAlpha by animateFloatAsState(
         targetValue = if (dashboardVisible) 1f else 0f,
-        animationSpec = tween(520, easing = FastOutSlowInEasing),
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
         label = "dashboard-entry-alpha"
     )
 
     val dashboardOffset by animateFloatAsState(
-        targetValue = if (dashboardVisible) 0f else 18f,
-        animationSpec = tween(520, easing = FastOutSlowInEasing),
+        targetValue = if (dashboardVisible) 0f else 14f,
+        animationSpec = tween(420, easing = FastOutSlowInEasing),
         label = "dashboard-entry-offset"
     )
 
@@ -93,65 +105,18 @@ internal fun DashboardScreen(
                 translationY = dashboardOffset
             }
             .verticalScroll(rememberScrollState())
-            .padding(
-                start = 19.dp,
-                end = 19.dp,
-                top = 32.dp,
-                bottom = 22.dp
-            ),
-        verticalArrangement = Arrangement.spacedBy(22.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(R.drawable.netha_logo),
-                    contentDescription = "NETHA X ULTIMATE Logo",
-                    modifier = Modifier
-                        .size(46.dp)
-                        .clip(RoundedCornerShape(14.dp)),
-                    contentScale = ContentScale.Fit
-                )
-
-                Spacer(Modifier.width(11.dp))
-
-                Column {
-                    Text(
-                        "NETHA X",
-                        color = MainText,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 1.2.sp
-                    )
-
-                    Text(
-                        "U L T I M A T E",
-                        color = Color(0xFFAAA3C7),
-                        fontSize = 9.sp,
-                        letterSpacing = 2.3.sp
-                    )
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .shadow(8.dp, CircleShape, spotColor = Green)
-                    .background(Green, CircleShape)
-            )
-        }
+        DashboardHeader()
 
         WelcomePanel()
 
-        Text(
-            "YOUR TOOLS",
-            color = Color(0xFFBDA5F9),
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 2.3.sp
+        DeviceStatusPanel(deviceSnapshot)
+
+        SectionHeader(
+            title = "OUR TOOLS",
+            detail = "8 FEATURES"
         )
 
         Row(
@@ -163,8 +128,9 @@ internal fun DashboardScreen(
                 icon = "✂️",
                 title = "AI Background Remover",
                 description = "Remove photo background",
-                action = "OPEN TOOL  →",
-                animationDelayMillis = 80L,
+                action = "OPEN TOOL",
+                accent = DashboardPurple,
+                animationDelayMillis = 60L,
                 onClick = onBackground
             )
 
@@ -172,49 +138,53 @@ internal fun DashboardScreen(
                 modifier = Modifier.weight(1f),
                 icon = "🌐",
                 title = "Translation Camera",
-                description = "Live Camera Translator",
-                action = "OPEN TOOL  →",
-                animationDelayMillis = 170L,
+                description = "Live camera translator",
+                action = "OPEN TOOL",
+                accent = DashboardBlue,
+                animationDelayMillis = 110L,
                 onClick = onTranslation
             )
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
             FeatureCard(
                 modifier = Modifier.weight(1f),
                 icon = "⚡",
                 title = "Mobile Optimizer",
-                description = "App Cache Cleaner",
-                action = "BOOST DEVICE  →",
-                animationDelayMillis = 260L,
+                description = "Device maintenance",
+                action = "BOOST DEVICE",
+                accent = DashboardTeal,
+                animationDelayMillis = 160L,
                 onClick = onOptimizer
             )
 
             FeatureCard(
                 modifier = Modifier.weight(1f),
-                icon = "🌐",
-                title = "Real Network Speed Test",
-                description = "Live Download • Upload • Ping",
-                action = "TEST NETWORK  →",
-                animationDelayMillis = 350L,
+                icon = "📶",
+                title = "Network Speed Test",
+                description = "Download • Upload • Ping",
+                action = "TEST NETWORK",
+                accent = DashboardBlue,
+                animationDelayMillis = 210L,
                 onClick = onNetworkSpeed
             )
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
             FeatureCard(
                 modifier = Modifier.weight(1f),
                 icon = "🕵️",
                 title = "NETHA X BLACKBOX",
-                description = "Smart Performance Detective",
-                action = "ANALYZE DEVICE  →",
-                animationDelayMillis = 440L,
+                description = "Smart performance analysis",
+                action = "ANALYZE DEVICE",
+                accent = DashboardOrange,
+                animationDelayMillis = 260L,
                 onClick = onBlackbox
             )
 
@@ -223,24 +193,25 @@ internal fun DashboardScreen(
                 icon = "📁",
                 title = "SMART FILE RESCUE",
                 description = "Scan • Organize • Recover",
-                action = "OPEN FILE RESCUE  →",
-                animationDelayMillis = 520L,
+                action = "OPEN FILE RESCUE",
+                accent = DashboardPurple,
+                animationDelayMillis = 310L,
                 onClick = onFileRescue
             )
         }
 
-        // Gaming Floating HUD and Aim Frame
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
             FeatureCard(
                 modifier = Modifier.weight(1f),
                 icon = "🎮",
                 title = "GAMING FLOATING HUD",
                 description = "FPS • Battery • Temperature",
-                action = "OPEN HUD  →",
-                animationDelayMillis = 600L,
+                action = "OPEN HUD",
+                accent = DashboardPink,
+                animationDelayMillis = 360L,
                 onClick = onGamingHud
             )
 
@@ -248,20 +219,13 @@ internal fun DashboardScreen(
                 modifier = Modifier.weight(1f),
                 icon = "🎯",
                 title = "NETHA X AIM FRAME",
-                description = "Adjustable Static Aim Guide",
-                action = "OPEN AIM FRAME  →",
-                animationDelayMillis = 680L,
+                description = "Adjustable static aim guide",
+                action = "OPEN AIM FRAME",
+                accent = DashboardTeal,
+                animationDelayMillis = 410L,
                 onClick = onAimFrame
             )
         }
-
-        Text(
-            "YOUR EXPERIENCE",
-            color = Color(0xFFBDA5F9),
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 2.3.sp
-        )
 
         ExperiencePanel()
 
@@ -269,145 +233,412 @@ internal fun DashboardScreen(
             "NETHA X ULTIMATE  •  VERSION 2.0 NATIVE",
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 4.dp, bottom = 18.dp),
-            color = Color(0xFF716B8B),
+                .padding(top = 2.dp, bottom = 8.dp),
+            color = DashboardMuted.copy(alpha = 0.78f),
             fontSize = 9.sp,
-            letterSpacing = 1.4.sp,
+            letterSpacing = 1.1.sp,
             textAlign = TextAlign.Center
         )
     }
 }
 
 @Composable
-private fun WelcomePanel() {
-    val glowTransition = rememberInfiniteTransition(
-        label = "welcome-panel-glow"
-    )
+private fun DashboardHeader() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                painter = painterResource(R.drawable.netha_logo),
+                contentDescription = "NETHA X ULTIMATE Logo",
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(14.dp)),
+                contentScale = ContentScale.Fit
+            )
 
-    val glowAlpha by glowTransition.animateFloat(
-        initialValue = 0.10f,
-        targetValue = 0.24f,
-        animationSpec = infiniteRepeatable(
-            tween(1800, easing = FastOutSlowInEasing),
-            RepeatMode.Reverse
-        ),
-        label = "welcome-glow-alpha"
-    )
+            Spacer(Modifier.width(10.dp))
+
+            Column {
+                Text(
+                    "NETHA X",
+                    color = DashboardInk,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 0.5.sp
+                )
+                Text(
+                    "ULTIMATE",
+                    color = DashboardPurple,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 2.4.sp
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(Color(0xFFE7F8F0))
+                .border(1.dp, Color(0xFFBCEBD4), CircleShape)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(7.dp)
+                    .background(Color(0xFF17B978), CircleShape)
+            )
+            Spacer(Modifier.width(7.dp))
+            Text(
+                "READY",
+                color = Color(0xFF16875A),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 1.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun WelcomePanel() {
+    val shape = RoundedCornerShape(25.dp)
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(222.dp)
-            .shadow(
-                elevation = 22.dp,
-                shape = RoundedCornerShape(25.dp),
-                spotColor = Purple
-            )
-            .clip(RoundedCornerShape(25.dp))
+            .height(170.dp)
+            .shadow(14.dp, shape, spotColor = DashboardBlue.copy(alpha = 0.18f))
+            .clip(shape)
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xFF321B58),
-                        Color(0xFF17284A),
-                        Color(0xFF102C3B)
+                        Color(0xFFE3F2FF),
+                        Color(0xFFF0EDFF),
+                        Color(0xFFFFF5FC)
                     )
                 )
             )
             .border(
-                width = 1.2.dp,
-                brush = Brush.linearGradient(
+                1.dp,
+                Brush.linearGradient(
                     listOf(
-                        Color(0xCCB58AFF),
-                        Color(0x8835EAFF),
-                        Color(0x669B5CFF)
+                        Color(0xFFB9DDFF),
+                        Color(0xFFD5C4FF),
+                        Color(0xFFF4C8E7)
                     )
                 ),
-                shape = RoundedCornerShape(25.dp)
+                shape
             )
-            .padding(23.dp)
     ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer { alpha = glowAlpha }
-                .background(
-                    Brush.radialGradient(
-                        listOf(
-                            Color(0x8835EAFF),
-                            Color(0x2235EAFF),
-                            Color.Transparent
-                        )
-                    )
-                )
-        )
-
-        Box(
-            modifier = Modifier
-                .size(145.dp)
+                .size(160.dp)
                 .align(Alignment.TopEnd)
-                .offset(x = 45.dp, y = (-65).dp)
+                .graphicsLayer { translationX = 55f; translationY = (-55f) }
                 .background(
                     Brush.radialGradient(
-                        listOf(
-                            Color(0x559B5CFF),
-                            Color.Transparent
-                        )
+                        listOf(Color(0x667F9FFF), Color.Transparent)
                     ),
                     CircleShape
                 )
         )
 
-        Box(
+        Image(
+            painter = painterResource(R.drawable.netha_logo),
+            contentDescription = null,
             modifier = Modifier
-                .size(170.dp)
                 .align(Alignment.CenterEnd)
-                .offset(x = 50.dp)
-                .border(1.dp, Color(0x55B58AFF), CircleShape)
+                .padding(end = 12.dp)
+                .size(105.dp)
+                .graphicsLayer { alpha = 0.23f },
+            contentScale = ContentScale.Fit
         )
 
-        Box(
+        Column(
             modifier = Modifier
-                .size(125.dp)
-                .align(Alignment.CenterEnd)
-                .offset(x = 27.dp)
-                .border(1.dp, Color(0x4435EAFF), CircleShape)
-        )
-
-        Column(modifier = Modifier.align(Alignment.CenterStart)) {
+                .align(Alignment.CenterStart)
+                .fillMaxWidth(0.78f)
+                .padding(start = 20.dp, end = 8.dp)
+        ) {
             Text(
-                "W E L C O M E",
-                color = Color(0xFFCFB6FF),
+                "WELCOME BACK",
+                color = DashboardBlue,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 2.sp
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                "Your Ultimate",
+                color = DashboardInk,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Black
+            )
+
+            Text(
+                "Digital Companion",
+                color = DashboardPurple,
+                fontSize = 21.sp,
+                fontWeight = FontWeight.Black
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                "Boost  •  Optimize  •  Enjoy",
+                color = DashboardMuted,
                 fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 2.8.sp
-            )
-
-            Spacer(Modifier.height(14.dp))
-
-            Text(
-                "WELCOME TO",
-                color = MainText,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Black,
-                lineHeight = 31.sp
-            )
-
-            Text(
-                "NETHA X",
-                color = Cyan,
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Black,
-                letterSpacing = 0.3.sp
-            )
-
-            Spacer(Modifier.height(9.dp))
-
-            Text(
-                "Your next-level digital experience starts here.",
-                color = Color(0xFFD0CBE3),
-                fontSize = 11.sp
+                fontWeight = FontWeight.SemiBold
             )
         }
+    }
+}
+
+private data class DeviceSnapshot(
+    val deviceName: String,
+    val androidVersion: String,
+    val ramUsed: Long,
+    val ramTotal: Long,
+    val storageFree: Long,
+    val storageTotal: Long,
+    val batteryPercent: Int,
+    val batteryTemperature: Float?
+)
+
+private fun readDeviceSnapshot(context: Context): DeviceSnapshot {
+    val memoryInfo = ActivityManager.MemoryInfo()
+    val activityManager =
+        context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+    activityManager?.getMemoryInfo(memoryInfo)
+
+    val totalRam = memoryInfo.totalMem.coerceAtLeast(0L)
+    val usedRam = (totalRam - memoryInfo.availMem).coerceAtLeast(0L)
+
+    val storage = StatFs(Environment.getDataDirectory().absolutePath)
+    val storageFree = storage.availableBytes.coerceAtLeast(0L)
+    val storageTotal = storage.totalBytes.coerceAtLeast(0L)
+
+    val batteryIntent = context.registerReceiver(
+        null,
+        IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+    )
+    val batteryLevel = batteryIntent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+    val batteryScale = batteryIntent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
+    val batteryPercent = if (batteryLevel >= 0 && batteryScale > 0) {
+        (batteryLevel * 100) / batteryScale
+    } else {
+        -1
+    }
+
+    val temperatureRaw =
+        batteryIntent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1) ?: -1
+    val batteryTemperature =
+        if (temperatureRaw >= 0) temperatureRaw / 10f else null
+
+    return DeviceSnapshot(
+        deviceName = Build.MODEL.orEmpty().ifBlank { "Android Device" },
+        androidVersion = Build.VERSION.RELEASE.orEmpty(),
+        ramUsed = usedRam,
+        ramTotal = totalRam,
+        storageFree = storageFree,
+        storageTotal = storageTotal,
+        batteryPercent = batteryPercent,
+        batteryTemperature = batteryTemperature
+    )
+}
+
+private fun formatGigabytes(bytes: Long): String {
+    val value = bytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+    return String.format(Locale.US, "%.1f GB", value)
+}
+
+@Composable
+private fun DeviceStatusPanel(snapshot: DeviceSnapshot) {
+    val shape = RoundedCornerShape(23.dp)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(10.dp, shape, spotColor = DashboardBlue.copy(alpha = 0.12f))
+            .clip(shape)
+            .background(DashboardCard)
+            .border(1.dp, Color(0xFFDDE9FA), shape)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(11.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    "DEVICE STATUS",
+                    color = DashboardInk,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    snapshot.deviceName + "  •  Android " + snapshot.androidVersion,
+                    color = DashboardMuted,
+                    fontSize = 9.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Text(
+                "LIVE INFO",
+                color = DashboardBlue,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 1.sp
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            DeviceMetric(
+                modifier = Modifier.weight(1f),
+                icon = "▦",
+                label = "RAM",
+                value = formatGigabytes(snapshot.ramTotal),
+                detail = "Used " + formatGigabytes(snapshot.ramUsed),
+                accent = DashboardBlue
+            )
+            DeviceMetric(
+                modifier = Modifier.weight(1f),
+                icon = "▤",
+                label = "STORAGE FREE",
+                value = formatGigabytes(snapshot.storageFree),
+                detail = "of " + formatGigabytes(snapshot.storageTotal),
+                accent = DashboardPurple
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            DeviceMetric(
+                modifier = Modifier.weight(1f),
+                icon = "▣",
+                label = "BATTERY",
+                value = if (snapshot.batteryPercent >= 0) {
+                    snapshot.batteryPercent.toString() + "%"
+                } else {
+                    "N/A"
+                },
+                detail = "Current level",
+                accent = DashboardTeal
+            )
+            DeviceMetric(
+                modifier = Modifier.weight(1f),
+                icon = "℃",
+                label = "BATTERY TEMP",
+                value = snapshot.batteryTemperature?.let {
+                    String.format(Locale.US, "%.1f°C", it)
+                } ?: "N/A",
+                detail = "Temperature",
+                accent = DashboardPink
+            )
+        }
+    }
+}
+
+@Composable
+private fun DeviceMetric(
+    modifier: Modifier = Modifier,
+    icon: String,
+    label: String,
+    value: String,
+    detail: String,
+    accent: Color
+) {
+    Column(
+        modifier = modifier
+            .height(82.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(accent.copy(alpha = 0.075f))
+            .border(1.dp, accent.copy(alpha = 0.14f), RoundedCornerShape(15.dp))
+            .padding(horizontal = 10.dp, vertical = 9.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                icon,
+                color = accent,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Black
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                label,
+                color = DashboardMuted,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        Text(
+            value,
+            color = DashboardInk,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        Text(
+            detail,
+            color = DashboardMuted,
+            fontSize = 8.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun SectionHeader(
+    title: String,
+    detail: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 1.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            title,
+            color = DashboardInk,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Black,
+            letterSpacing = 0.7.sp
+        )
+
+        Text(
+            detail,
+            color = DashboardBlue,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 1.sp
+        )
     }
 }
 
@@ -418,216 +649,187 @@ private fun FeatureCard(
     title: String,
     description: String,
     action: String,
+    accent: Color,
     animationDelayMillis: Long = 0L,
     onClick: () -> Unit
 ) {
     var entryVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        if (animationDelayMillis > 0L) {
-            delay(animationDelayMillis)
-        }
+        if (animationDelayMillis > 0L) delay(animationDelayMillis)
         entryVisible = true
     }
 
     val entryAlpha by animateFloatAsState(
         targetValue = if (entryVisible) 1f else 0f,
-        animationSpec = tween(380, easing = FastOutSlowInEasing),
+        animationSpec = tween(320, easing = FastOutSlowInEasing),
         label = "feature-entry-alpha"
     )
 
     val entryOffset by animateFloatAsState(
-        targetValue = if (entryVisible) 0f else 16f,
-        animationSpec = tween(380, easing = FastOutSlowInEasing),
+        targetValue = if (entryVisible) 0f else 12f,
+        animationSpec = tween(320, easing = FastOutSlowInEasing),
         label = "feature-entry-offset"
     )
 
     val entryScale by animateFloatAsState(
-        targetValue = if (entryVisible) 1f else 0.96f,
-        animationSpec = tween(380, easing = FastOutSlowInEasing),
+        targetValue = if (entryVisible) 1f else 0.97f,
+        animationSpec = tween(320, easing = FastOutSlowInEasing),
         label = "feature-entry-scale"
     )
 
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-
     val pressScale by animateFloatAsState(
-        targetValue = if (pressed) 0.97f else 1f,
-        animationSpec = tween(160),
+        targetValue = if (pressed) 0.965f else 1f,
+        animationSpec = tween(140),
         label = "feature-press-scale"
     )
 
+    val shape = RoundedCornerShape(20.dp)
+
     Column(
         modifier = modifier
-            .height(160.dp)
+            .height(158.dp)
             .graphicsLayer {
                 scaleX = pressScale * entryScale
                 scaleY = pressScale * entryScale
                 alpha = entryAlpha
                 translationY = entryOffset
             }
-            .clip(RoundedCornerShape(19.dp))
-            .background(Color(0xFF172536))
-            .border(
-                width = 1.dp,
-                brush = Brush.linearGradient(
+            .shadow(8.dp, shape, spotColor = accent.copy(alpha = 0.16f))
+            .clip(shape)
+            .background(
+                Brush.linearGradient(
                     listOf(
-                        Color(0xAAAE82FF),
-                        Color(0x7735EAFF),
-                        Color(0x669B5CFF)
+                        accent.copy(alpha = 0.13f),
+                        Color.White,
+                        accent.copy(alpha = 0.07f)
                     )
-                ),
-                shape = RoundedCornerShape(19.dp)
+                )
             )
+            .border(1.dp, accent.copy(alpha = 0.27f), shape)
             .clickable(
                 interactionSource = interaction,
                 indication = null,
                 onClick = onClick
             )
-            .padding(horizontal = 9.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(horizontal = 10.dp, vertical = 11.dp),
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
         Box(
             modifier = Modifier
-                .size(43.dp)
+                .size(42.dp)
                 .clip(RoundedCornerShape(13.dp))
-                .background(Color(0xFF21445A))
-                .border(
-                    1.dp,
-                    Color(0x889BCAFF),
-                    RoundedCornerShape(13.dp)
-                ),
+                .background(accent.copy(alpha = 0.13f))
+                .border(1.dp, accent.copy(alpha = 0.18f), RoundedCornerShape(13.dp)),
             contentAlignment = Alignment.Center
         ) {
             Text(icon, fontSize = 21.sp)
         }
 
-        Spacer(Modifier.height(8.dp))
+        Column {
+            Text(
+                title,
+                color = DashboardInk,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.ExtraBold,
+                lineHeight = 14.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(Modifier.height(3.dp))
+
+            Text(
+                description,
+                color = DashboardMuted,
+                fontSize = 8.sp,
+                lineHeight = 11.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
 
         Text(
-            title,
-            color = Color(0xFFE8DCFF),
-            fontSize = 11.sp,
-            fontWeight = FontWeight.ExtraBold,
-            textAlign = TextAlign.Center,
-            lineHeight = 14.sp,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        Spacer(Modifier.height(4.dp))
-
-        Text(
-            description,
-            color = Color(0xFFBDBBD0),
-            fontSize = 9.sp,
-            textAlign = TextAlign.Center,
-            maxLines = 1
-        )
-
-        Spacer(Modifier.height(7.dp))
-
-        Text(
-            action,
-            color = Cyan,
+            action + "  →",
+            color = accent,
             fontSize = 8.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.9.sp
+            fontWeight = FontWeight.Black,
+            letterSpacing = 0.35.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
 
 @Composable
 private fun ExperiencePanel() {
-    Box(
+    val shape = RoundedCornerShape(22.dp)
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(190.dp)
-            .shadow(
-                elevation = 17.dp,
-                shape = RoundedCornerShape(20.dp),
-                spotColor = Cyan
-            )
-            .clip(RoundedCornerShape(20.dp))
+            .shadow(8.dp, shape, spotColor = DashboardPurple.copy(alpha = 0.12f))
+            .clip(shape)
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xFF142C43),
-                        Color(0xFF1B1538),
-                        Color(0xFF101D32)
+                        Color(0xFFEAF5FF),
+                        Color(0xFFF2EDFF),
+                        Color(0xFFFFF1F8)
                     )
                 )
             )
-            .border(
-                width = 1.dp,
-                brush = Brush.linearGradient(
-                    listOf(
-                        Color(0x8835EAFF),
-                        Color(0x779B5CFF),
-                        Color(0x5535EAFF)
-                    )
-                ),
-                shape = RoundedCornerShape(20.dp)
-            ),
-        contentAlignment = Alignment.Center
+            .border(1.dp, Color(0xFFD8E3FA), shape)
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Box(
-            modifier = Modifier
-                .size(180.dp)
-                .align(Alignment.CenterStart)
-                .offset(x = (-95).dp)
-                .background(
-                    Brush.radialGradient(
-                        listOf(
-                            Color(0x4435EAFF),
-                            Color.Transparent
-                        )
-                    ),
-                    CircleShape
-                )
-        )
-
-        Box(
-            modifier = Modifier
-                .size(180.dp)
-                .align(Alignment.CenterEnd)
-                .offset(x = 95.dp)
-                .background(
-                    Brush.radialGradient(
-                        listOf(
-                            Color(0x449B5CFF),
-                            Color.Transparent
-                        )
-                    ),
-                    CircleShape
-                )
-        )
-
-        Canvas(modifier = Modifier.size(132.dp)) {
-            drawCircle(
-                Color(0x7735EAFF),
-                style = Stroke(width = 1.2.dp.toPx())
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                "BUILT FOR YOUR DEVICE",
+                color = DashboardPurple,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 1.2.sp
             )
 
-            drawCircle(
-                Color(0x669B5CFF),
-                radius = size.minDimension * 0.36f,
-                style = Stroke(width = 1.2.dp.toPx())
+            Spacer(Modifier.height(5.dp))
+
+            Text(
+                "One app. More possibilities.",
+                color = DashboardInk,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Black
             )
 
-            drawCircle(
-                Color(0x2235EAFF),
-                radius = size.minDimension * 0.23f
+            Text(
+                "Explore your NETHA X tools.",
+                color = DashboardMuted,
+                fontSize = 10.sp
             )
         }
 
-        Text(
-            "NX",
-            color = Cyan,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 3.sp
-        )
+        Box(
+            modifier = Modifier
+                .size(58.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.linearGradient(
+                        listOf(DashboardBlue, DashboardPurple)
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                "NX",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-1).sp
+            )
+        }
     }
 }
