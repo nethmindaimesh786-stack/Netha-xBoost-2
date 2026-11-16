@@ -132,6 +132,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 
+@Composable
 internal fun ToolPage(
     title: String,
     subtitle: String,
