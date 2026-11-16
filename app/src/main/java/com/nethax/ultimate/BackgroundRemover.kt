@@ -132,6 +132,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 
+@Composable
 internal fun BackgroundRemoverScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -607,4 +608,3 @@ private fun saveImageToGallery(
     return "Image saved in the app Pictures/NETHA X folder"
 }
 
-@Composable
