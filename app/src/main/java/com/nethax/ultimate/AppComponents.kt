@@ -341,3 +341,16 @@ internal fun StatusText(
         modifier = Modifier.fillMaxWidth()
     )
 }
+
+// Small modifier helpers keep the layout declarations easy to scan.
+
+internal fun Modifier.offsetXCompat(
+    value: androidx.compose.ui.unit.Dp
+): Modifier = this.offset(x = value)
+
+internal fun Modifier.heightInCompat(
+    value: androidx.compose.ui.unit.Dp
+): Modifier = this.height(value)
+
+
+// ------------------------------------------------------------
