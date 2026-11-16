@@ -134,14 +134,14 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal val Bg = Color(0xFF070713)
-internal val Panel = Color(0xFF11182B)
-internal val Purple = Color(0xFF9B5CFF)
-internal val Cyan = Color(0xFF35EAFF)
-internal val SoftText = Color(0xFFAAA9C1)
-internal val MainText = Color(0xFFF7F4FF)
-internal val Green = Color(0xFF00FFAE)
-internal val PanelBorder = Color(0x665C6FAD)
+internal val Bg = Color(0xFFF5F8FF)
+internal val Panel = Color(0xFFFFFFFF)
+internal val Purple = Color(0xFF8054E9)
+internal val Cyan = Color(0xFF2479F2)
+internal val SoftText = Color(0xFF687895)
+internal val MainText = Color(0xFF17213D)
+internal val Green = Color(0xFF16875A)
+internal val PanelBorder = Color(0xFFDCE8F8)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -467,10 +467,10 @@ private fun AppBackdrop() {
             .background(
                 Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFF100B25),
+                        Color(0xFFF8FBFF),
                         Bg,
-                        Color(0xFF061B29),
-                        Color(0xFF090817)
+                        Color(0xFFF0EDFF),
+                        Color(0xFFFFF7FC)
                     ),
                     start = Offset.Zero,
                     end = Offset(1100f, 1900f)
@@ -486,8 +486,8 @@ private fun AppBackdrop() {
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            Color(0xFF9B5CFF),
-                            Color(0x553F2A86),
+                            Color(0xFFB9A2FF),
+                            Color(0x55D8D0FF),
                             Color.Transparent
                         )
                     ),
@@ -504,8 +504,8 @@ private fun AppBackdrop() {
                 .background(
                     Brush.radialGradient(
                         listOf(
-                            Color(0xFF00D9FF),
-                            Color(0x44305E9B),
+                            Color(0xFF9FD8FF),
+                            Color(0x44D7ECFF),
                             Color.Transparent
                         )
                     ),
