@@ -461,17 +461,5 @@ private fun formatBytes(value: Long): String {
     return "%.2f MB".format(kb / 1024.0)
 }
 
-// Small modifier helpers keep the layout declarations easy to scan.
-
-private fun Modifier.offsetXCompat(
-    value: androidx.compose.ui.unit.Dp
-): Modifier = this.offset(x = value)
-
-private fun Modifier.heightInCompat(
-    value: androidx.compose.ui.unit.Dp
-): Modifier = this.height(value)
-
-
-// ------------------------------------------------------------
 // NETHA X BLACKBOX — SMART PERFORMANCE DETECTIVE
 // ------------------------------------------------------------
