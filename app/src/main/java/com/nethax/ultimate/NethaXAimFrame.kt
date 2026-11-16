@@ -23,10 +23,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 
-private val AimBg = Color(0xFF080D16)
-private val AimCard = Color(0xFF111C2B)
-private val AimCyan = Color(0xFF00D9FF)
-private val AimGreen = Color(0xFF00FF9C)
+private val AimBg = Color(0xFFF5F8FF)
+private val AimCard = Color(0xFFFFFFFF)
+private val AimCyan = Color(0xFF2479F2)
+private val AimGreen = Color(0xFF16875A)
 
 private const val AIM_PREFS = "netha_aim_frame_status"
 private const val AIM_RUNNING_KEY = "is_running"
