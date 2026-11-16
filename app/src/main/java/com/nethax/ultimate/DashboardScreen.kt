@@ -1,3 +1,4 @@
+
 package com.nethax.ultimate
 
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -228,16 +229,23 @@ internal fun DashboardScreen(
             )
         }
 
-        // NEW: Gaming Floating HUD
-        FeatureCard(
+        // Gaming Floating HUD - same card width as other tools
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            icon = "🎮",
-            title = "GAMING FLOATING HUD",
-            description = "Live FPS • Battery • Temperature • Play Time",
-            action = "OPEN GAMING HUD  →",
-            animationDelayMillis = 600L,
-            onClick = onGamingHud
-        )
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            FeatureCard(
+                modifier = Modifier.weight(1f),
+                icon = "🎮",
+                title = "GAMING FLOATING HUD",
+                description = "FPS • Battery • Temperature",
+                action = "OPEN HUD  →",
+                animationDelayMillis = 600L,
+                onClick = onGamingHud
+            )
+
+            Spacer(Modifier.weight(1f))
+        }
 
         Text(
             "YOUR EXPERIENCE",
