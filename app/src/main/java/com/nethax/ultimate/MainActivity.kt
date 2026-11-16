@@ -220,13 +220,18 @@ private fun NethaApp() {
                             onBack = { currentScreen = "home" }
                         )
 
+                        "gaming_hud" -> GamingFloatingHUDScreen(
+                            onBack = { currentScreen = "home" }
+                        )
+
                         else -> DashboardScreen(
                             onBackground = { currentScreen = "background" },
                             onTranslation = { currentScreen = "translation" },
                             onOptimizer = { currentScreen = "optimizer" },
                             onNetworkSpeed = { currentScreen = "network" },
                             onBlackbox = { currentScreen = "blackbox" },
-                            onFileRescue = { currentScreen = "file_rescue" }
+                            onFileRescue = { currentScreen = "file_rescue" },
+                            onGamingHud = { currentScreen = "gaming_hud" }
                         )
                     }
                 }
