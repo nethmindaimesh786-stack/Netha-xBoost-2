@@ -354,8 +354,8 @@ private fun WelcomePanel() {
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .padding(end = 12.dp)
-                .size(105.dp)
-                .graphicsLayer { alpha = 0.23f },
+                .size(118.dp)
+                .graphicsLayer { alpha = 0.48f },
             contentScale = ContentScale.Fit
         )
 
