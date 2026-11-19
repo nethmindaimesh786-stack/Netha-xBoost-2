@@ -33,11 +33,11 @@ jobs:
       - name: Install Linux build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            git zip unzip \
-            autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev \
-            libtinfo6 cmake libffi-dev libssl-dev \
+          sudo apt-get install -y \\
+            git zip unzip \\
+            autoconf libtool pkg-config \\
+            zlib1g-dev libncurses5-dev libncursesw5-dev \\
+            libtinfo6 cmake libffi-dev libssl-dev \\
             automake autopoint gettext build-essential
 
       - name: Install Buildozer
@@ -50,9 +50,19 @@ jobs:
         env:
           BUILDOZER_WARN_ON_ROOT: "0"
         run: |
+          set -euo pipefail
+          ROOT_SETTINGS="$GITHUB_WORKSPACE/settings.gradle.kts"
+          ROOT_SETTINGS_BACKUP="$GITHUB_WORKSPACE/.netha-root-settings.gradle.kts.backup"
+
+          if [ -f "$ROOT_SETTINGS" ]; then
+            mv "$ROOT_SETTINGS" "$ROOT_SETTINGS_BACKUP"
+            trap 'mv "$ROOT_SETTINGS_BACKUP" "$ROOT_SETTINGS"' EXIT
+            echo "Temporarily isolated the existing Kotlin Gradle settings for the Python APK build."
+          fi
+
           yes | buildozer -v android debug > buildozer.log 2>&1 || {
             echo "===== BUILD ERROR LINES ====="
-            grep -nE "ERROR:|error:|Traceback|No matching distribution|not a supported wheel|ErrorReturnCode|FAILED:|No space left" buildozer.log | tail -40 || true
+            grep -nE "ERROR:|error:|Traceback|No matching distribution|not a supported wheel|ErrorReturnCode|FAILED:|No space left|Project directory" buildozer.log | tail -40 || true
             echo "===== LAST 60 LOG LINES ====="
             tail -60 buildozer.log || true
             exit 1
