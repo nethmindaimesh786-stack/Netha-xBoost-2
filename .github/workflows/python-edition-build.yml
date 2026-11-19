@@ -50,7 +50,7 @@ jobs:
         env:
           BUILDOZER_WARN_ON_ROOT: "0"
         run: |
-          set -euo pipefail
+          set -eu
           ROOT_SETTINGS="$GITHUB_WORKSPACE/settings.gradle.kts"
           ROOT_SETTINGS_BACKUP="$GITHUB_WORKSPACE/.netha-root-settings.gradle.kts.backup"
 
