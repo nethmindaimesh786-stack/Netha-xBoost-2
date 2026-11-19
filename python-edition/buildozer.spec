@@ -10,8 +10,11 @@ source.include_exts = py,png,jpg,kv,atlas,txt
 
 version = 0.1.0
 
-; Pin charset-normalizer to a universal wheel. Newer releases publish Android-tagged
-; wheels that python-for-android's pip can reject during ARM64 builds.
+; Use the python-for-android develop branch: it fixes ARM64 wheel installation
+; by passing the Android platform tag during both dependency resolution and install.
+p4a.branch = develop
+
+; Keep the charset-normalizer pin as an additional compatibility safeguard.
 requirements = python3,kivy,charset-normalizer==2.1.1
 
 orientation = portrait
