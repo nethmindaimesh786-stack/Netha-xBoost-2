@@ -10,7 +10,9 @@ source.include_exts = py,png,jpg,kv,atlas,txt
 
 version = 0.1.0
 
-requirements = python3,kivy
+; Pin charset-normalizer to a universal wheel. Newer releases publish Android-tagged
+; wheels that python-for-android's pip can reject during ARM64 builds.
+requirements = python3,kivy,charset-normalizer==2.1.1
 
 orientation = portrait
 fullscreen = 0
