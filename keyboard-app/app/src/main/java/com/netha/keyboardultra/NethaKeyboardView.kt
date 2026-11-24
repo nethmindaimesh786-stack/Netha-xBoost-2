@@ -150,7 +150,8 @@ class NethaKeyboardView(context: Context, private val action: (String, String) -
             isClickable = true
             isFocusable = true
         }
-        val main = label(if (caps) char.uppercase() else char, 23f, Color.WHITE, true)\n        main.tag = char
+        val main = label(if (caps) char.uppercase() else char, 23f, Color.WHITE, true)
+        main.tag = char
         // Native text remains crisp; key backgrounds stay independent from the RGB glyph styling.
         main.setTextColor(Color.rgb(235, 235, 240))
         box.addView(main, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
