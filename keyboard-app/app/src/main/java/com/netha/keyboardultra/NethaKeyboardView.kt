@@ -167,10 +167,27 @@ class NethaKeyboardView(context: Context, private val action: (String, String) -
             setOnClickListener { click() }
         }
 
-    fun setShift(value: Boolean) { caps = value; letterKeys.forEach { it.text = if (caps) it.text.toString().uppercase() else it.text.toString().lowercase() } }
-    fun setNumbers(value: Boolean) { numbers = value; }
+    fun setShift(value: Boolean) { caps = value; refreshKeyLabels() }
+    fun setNumbers(value: Boolean) { numbers = value; refreshKeyLabels() }
     fun setLanguage(value: Boolean) { sinhala = value }
-    fun setLayout(value: Boolean) { azerty = value; toast(if (azerty) "AZERTY layout selected" else "QWERTY layout selected") }
+    fun setLayout(value: Boolean) {
+        azerty = value
+        val qwerty = "QWERTYUIOPASDFGHJKLZXCVBNM"
+        val azertyChars = "AZERTYUIOPQSDFGHJKLMWXCVBN"
+        letterKeys.forEachIndexed { index, pair ->
+            val active = (if (azerty) azertyChars else qwerty).getOrNull(index)?.toString() ?: pair.second
+            pair.first.tag = active
+        }
+        refreshKeyLabels()
+        toast(if (azerty) "AZERTY layout selected" else "QWERTY layout selected")
+    }
+    private fun refreshKeyLabels() {
+        val symbols = mapOf('q' to "1", 'w' to "2", 'e' to "3", 'r' to "4", 't' to "5", 'y' to "6", 'u' to "7", 'i' to "8", 'o' to "9", 'p' to "0", 'a' to "@", 's' to "#", 'd' to "$", 'f' to "%", 'g' to "&", 'h' to "-", 'j' to "+", 'k' to "(", 'l' to ")", 'z' to "*", 'c' to "'", 'v' to ":", 'b' to ";", 'n' to "!", 'm' to "?")
+        letterKeys.forEach { (view, _) ->
+            val ch = (view.tag as? String)?.firstOrNull() ?: return@forEach
+            view.text = if (numbers) symbols[ch.lowercaseChar()] ?: ch.toString() else if (caps) ch.uppercaseChar().toString() else ch.toString().lowercase()
+        }
+    }
 
     fun showEmojiPicker(onPick: (String) -> Unit) {
         val emojis = arrayOf("😀", "😂", "🥲", "😍", "🔥", "❤️", "👍", "🙏", "🎂", "🎬", "😒", "🌟", "😭", "😊", "🚀")
