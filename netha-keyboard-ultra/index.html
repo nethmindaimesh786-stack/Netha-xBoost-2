@@ -97,7 +97,7 @@ button{font:inherit;border:0;outline:0;cursor:pointer;user-select:none;touch-act
 <script>
 "use strict";
 const typed=document.getElementById("typed"),statusEl=document.getElementById("status");
-let output="",currentWord="",isSinhala=false,isCaps=false,isNumber=false,isAZERTY=false,toolbarHidden=false,clipboardItems=[];
+let output="",currentWord="",isSinhala=false,isCaps=false,isNumber=false,isAZERTY=false,toolbarHidden=false,clipboardItems=[],fontMode="normal";
 const vowels={a:"",aa:"ා",ae:"ැ",aee:"ෑ",i:"ි",ii:"ී",u:"ු",uu:"ූ",e:"ෙ",ee:"ේ",o:"ො",oo:"ෝ"};
 const independent={a:"අ",aa:"ආ",ae:"ඇ",aee:"ඈ",i:"ඉ",ii:"ඊ",u:"උ",uu:"ඌ",e:"එ",ee:"ඒ",o:"ඔ",oo:"ඕ"};
 const consonants={k:["ක","ක්"],c:["ක","ක්"],g:["ග","ග්"],ch:["ච","ච්"],j:["ජ","ජ්"],t:["ට","ට්"],d:["ඩ","ඩ්"],th:["ත","ත්"],dh:["ද","ද්"],n:["න","න්"],nn:["ණ","ණ්"],p:["ප","ප්"],b:["බ","බ්"],m:["ම","ම්"],y:["ය","ය්"],r:["ර","ර්"],l:["ල","ල්"],w:["ව","ව්"],v:["ව","ව්"],s:["ස","ස්"],sh:["ශ","ශ්"],ssh:["ෂ","ෂ්"],h:["හ","හ්"],f:["ෆ","ෆ්"],q:["ක්","ක්"]};
@@ -107,7 +107,7 @@ Object.keys(consonants).forEach(roman=>{const pair=consonants[roman];rules[roman
 Object.assign(rules,{pr:"ප්‍ර්",pra:"ප්‍ර",kra:"ක්‍ර",gra:"ග්‍ර",tra:"ත්‍ර",dra:"ද්‍ර",sra:"ස්‍ර",swa:"ස්ව",sri:"ශ්‍රී",nya:"ඤ",ng:"ඟ",nd:"න්ද",mb:"ම්බ"});
 const ruleKeys=Object.keys(rules).sort((a,b)=>b.length-a.length);
 function convertSinhala(word){const s=word.toLowerCase();if(special[s])return special[s];let result="",i=0;while(i<s.length){let hit="";for(const k of ruleKeys){if(s.startsWith(k,i)){hit=k;break;}}if(hit){result+=rules[hit];i+=hit.length;}else{result+=independent[s[i]]||s[i];i++;}}return result;}
-function render(){typed.textContent=output+(isSinhala?convertSinhala(currentWord):currentWord);}
+function stylize(text){const starts={bold:[0x1D400,0x1D41A],italic:[0x1D434,0x1D44E],mono:[0x1D670,0x1D68A]};const pair=starts[fontMode];if(!pair)return text;return Array.from(text).map(ch=>{const n=ch.charCodeAt(0);if(n>=65&&n<=90)return String.fromCodePoint(pair[0]+n-65);if(n>=97&&n<=122)return String.fromCodePoint(pair[1]+n-97);return ch;}).join("");}\nfunction render(){typed.textContent=stylize(output+(isSinhala?convertSinhala(currentWord):currentWord));}
 function commitWord(){if(currentWord){output+=isSinhala?convertSinhala(currentWord):currentWord;currentWord="";}render();}
 function insertText(value){if(isSinhala&&/^[a-z]$/i.test(value)){currentWord+=value.toLowerCase();}else{commitWord();output+=value;}render();}
 function backspace(){if(currentWord)currentWord=currentWord.slice(0,-1);else output=Array.from(output).slice(0,-1).join("");render();}
@@ -127,7 +127,7 @@ document.getElementById("numbers").addEventListener("click",e=>{isNumber=!isNumb
 const panel=document.getElementById("panel"),panelTitle=document.getElementById("panelTitle"),panelGrid=document.getElementById("panelGrid");
 function openPanel(name){panelGrid.replaceChildren();panel.classList.add("open");const add=(label,fn)=>{const b=document.createElement("button");b.className="panel-item";b.textContent=label;b.addEventListener("click",()=>{fn();panel.classList.remove("open");});panelGrid.appendChild(b);};
 if(name==="emoji"){panelTitle.textContent="Emoji";["😀","😂","🥲","😍","🔥","❤️","👍","🙏","🎂","🎬","😒","🌟","😭","😊","🚀"].forEach(x=>add(x,()=>insertText(x)));}
-if(name==="font"){panelTitle.textContent="Decorative fonts";["Normal font","Bold font","Serif font"].forEach(x=>add(x,()=>setStatus(x+" selected")));}
+if(name==="font"){panelTitle.textContent="Decorative fonts";[["Normal","normal"],["Bold","bold"],["Italic","italic"],["Monospace","mono"]].forEach(([label,mode])=>add(label,()=>{fontMode=mode;render();setStatus(label+" font selected");}));}
 if(name==="style"){panelTitle.textContent="Text style";add("UPPERCASE",()=>{commitWord();output=output.toUpperCase();render();});add("lowercase",()=>{commitWord();output=output.toLowerCase();render();});add("Clear text",()=>{output="";currentWord="";render();});add("Copy text",copyText);}
 if(name==="clipboard"){panelTitle.textContent="Clipboard";add("Copy current text",copyText);add("Paste saved item",()=>{if(clipboardItems.length){commitWord();output+=clipboardItems[clipboardItems.length-1];render();}else setStatus("Clipboard is empty");});add("Clear clipboard",()=>{clipboardItems=[];setStatus("Clipboard cleared");});}
 if(name==="layout"){panelTitle.textContent="Keyboard layout";add(isAZERTY?"Switch to QWERTY":"Switch to AZERTY",()=>{isAZERTY=!isAZERTY;applyLayout();setStatus(isAZERTY?"AZERTY layout":"QWERTY layout");});add("Reset QWERTY",()=>{isAZERTY=false;applyLayout();});}}
