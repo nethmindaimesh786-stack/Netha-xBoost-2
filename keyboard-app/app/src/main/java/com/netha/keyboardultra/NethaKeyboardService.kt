@@ -1,6 +1,11 @@
 package com.netha.keyboardultra
 
 import android.inputmethodservice.InputMethodService
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
@@ -14,6 +19,25 @@ class NethaKeyboardService : InputMethodService() {
     private var azerty = false
     private var fontStyle = "normal"
     private var keyboardView: NethaKeyboardView? = null
+
+    private val voiceReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val spoken = intent?.getStringExtra("text").orEmpty()
+            if (spoken.isNotBlank()) { commitWord(); ic()?.commitText(spoken, 1) }
+        }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        val filter = IntentFilter("com.netha.keyboardultra.VOICE_RESULT")
+        if (Build.VERSION.SDK_INT >= 33) registerReceiver(voiceReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        else registerReceiver(voiceReceiver, filter)
+    }
+
+    override fun onDestroy() {
+        try { unregisterReceiver(voiceReceiver) } catch (_: Exception) { }
+        super.onDestroy()
+    }
 
     override fun onCreateInputView(): View {
         keyboardView = NethaKeyboardView(this) { action, value -> handleKey(action, value) }
@@ -98,7 +122,13 @@ class NethaKeyboardService : InputMethodService() {
                 toast("Font: $fontStyle")
             }
             "layout" -> { azerty = !azerty; keyboardView?.setLayout(azerty) }
-            "voice" -> toast("Use the microphone button on your phone's voice input")
+            "voice" -> {
+                try {
+                    startActivity(Intent(this, VoiceInputActivity::class.java)
+                        .putExtra("locale", if (sinhala) "si-LK" else "en-US")
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                } catch (_: Exception) { toast("Voice input is not available") }
+            }
             "clear" -> { currentWord.clear(); ic()?.finishComposingText(); toast("Composing text cleared") }
         }
     }
