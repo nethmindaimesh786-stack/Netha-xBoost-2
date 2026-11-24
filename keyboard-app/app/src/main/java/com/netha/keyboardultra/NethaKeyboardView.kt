@@ -19,7 +19,7 @@ class NethaKeyboardView(context: Context, private val action: (String, String) -
     private val keyBg = Color.rgb(36, 36, 38)
     private val keyBgAlt = Color.rgb(48, 48, 51)
     private val purple = Color.rgb(163, 92, 255)
-    private val letterKeys = mutableListOf<TextView>()
+    private val letterKeys = mutableListOf<Pair<TextView, String>>()
     private var sinhala = false
     private var caps = false
     private var numbers = false
@@ -149,14 +149,14 @@ class NethaKeyboardView(context: Context, private val action: (String, String) -
             background = shape(keyBg, 8)
             isClickable = true
             isFocusable = true
-            setOnClickListener { action("letter", char.lowercase()) }
+            setOnClickListener { action("letter", (main.tag as? String ?: char).lowercase()) }
         }
-        val main = label(if (caps) char.uppercase() else char, 23f, Color.WHITE, true)
+        val main = label(if (caps) char.uppercase() else char, 23f, Color.WHITE, true)\n        main.tag = char
         // Native text remains crisp; key backgrounds stay independent from the RGB glyph styling.
         main.setTextColor(Color.rgb(235, 235, 240))
         box.addView(main, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
         if (sub.isNotEmpty()) box.addView(label(sub, 9f, Color.LTGRAY))
-        letterKeys.add(main)
+        letterKeys.add(main to char)
         return box
     }
 
