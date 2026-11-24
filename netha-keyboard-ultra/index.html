@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#000">
+<title>NETHA KEYBOARD ULTRA</title>
+<style>
+:root{color-scheme:dark;--bg:#000;--key:#242426;--key2:#303033;--ink:#f0f0f5;--muted:#b9bac2;--purple:#a35cff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:Roboto,Arial,sans-serif}
+body{display:flex;align-items:flex-end;justify-content:center}
+button{font:inherit;border:0;outline:0;cursor:pointer;user-select:none;touch-action:manipulation}
+.stage{position:relative;width:min(100vw,91.145833dvh);aspect-ratio:1400/1536;max-height:100dvh;background:#000;overflow:visible;container-type:inline-size;isolation:isolate}
+.composer{display:none}
+.tools{position:absolute;left:2.35%;top:19.25%;width:95.3%;height:8.5%;display:flex;align-items:center;justify-content:space-between}
+.tool{height:100%;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:#0000ff;color:#f7f7fa}
+.tool:first-child,.tool:last-child{background:#858589}
+.tool svg{width:57%;height:57%;display:block}
+.tool .en{font-size:clamp(10px,3.5cqw,49px);font-weight:700}
+.tool .glyph{font-size:clamp(14px,4cqw,56px);font-weight:500}
+.emoji-row{position:absolute;left:1.55%;top:30.35%;width:96.9%;height:6.15%;display:flex;align-items:center;justify-content:space-between}
+.emoji{width:10%;height:100%;display:grid;place-items:center;background:transparent;color:#fff;font-size:clamp(18px,6.3cqw,74px);line-height:1}
+.key-row{position:absolute;height:10.78%;display:flex;gap:.75%;align-items:stretch}
+.row-one{left:.65%;top:40.25%;width:98.7%}
+.row-two{left:5.75%;top:52.02%;width:88.5%}
+.row-three{left:4.1%;top:63.78%;width:91.8%;gap:.8%}
+.key{position:relative;flex:1;min-width:0;overflow:visible;border-radius:clamp(7px,1.35cqw,19px);background:var(--key);color:#fff;display:flex;align-items:center;justify-content:center;font-size:clamp(18px,5.1cqw,90px);font-weight:900;line-height:1;box-shadow:inset 0 1px 0 #ffffff08}
+.key:active,.bottom-key:active{background:#46464a;transform:translateY(1px)}
+.key .sub{position:absolute;right:11%;top:5%;font-size:clamp(8px,2.15cqw,30px);line-height:1;color:#e3e3e8;font-weight:400}
+.letter{display:inline-block;background:linear-gradient(90deg,#ff004c,#ff9a00,#ffee00,#00e676,#00cfff,#8b5cf6,#ff36b7);background-size:300% 100%;background-clip:text;-webkit-background-clip:text;color:transparent;animation:letterRainbow 5s linear infinite}
+@keyframes letterRainbow{from{background-position:0% 50%}to{background-position:300% 50%}}
+.row-three .side-key{flex:0 0 10.5%;background:#000;color:#edf0f8;font-size:clamp(22px,5.3cqw,74px)}
+.row-three .side-key svg{width:100%;height:100%}
+.key-popup{position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%) scale(.86);min-width:55px;height:65px;padding:0 10px;display:flex;align-items:center;justify-content:center;background:#303033;color:#fff;font-size:34px;font-weight:700;border:1px solid var(--purple);border-radius:12px;box-shadow:0 5px 20px #0009;opacity:0;visibility:hidden;pointer-events:none;z-index:9999;transition:opacity .08s,transform .08s}
+.key.popup-active .key-popup{opacity:1;visibility:visible;transform:translateX(-50%) scale(1)}
+.bottom-row{position:absolute;left:3.1%;top:76.52%;width:93.8%;height:8.85%;display:flex;align-items:stretch;justify-content:space-between;gap:1%}
+.bottom-key{background:transparent;color:#ececf3;display:grid;place-items:center;min-width:0;font-size:clamp(14px,3.7cqw,52px);font-weight:400}
+.bottom-key.num,.bottom-key.globe{flex:0 0 11%}
+.bottom-key.comma,.bottom-key.dot{flex:0 0 5%}
+.bottom-key.space{flex:1;border-radius:999px;background:#fff;color:#000;font-size:clamp(13px,4.8cqw,53px);font-weight:900}
+.bottom-key.enter{flex:0 0 14%;border-radius:999px;background:#4b4b4e}
+.bottom-key svg{width:54%;height:54%}
+.nav{position:absolute;left:0;top:77.7%;width:100%;height:22.3%;pointer-events:none}
+.nav-down{position:absolute;left:7.3%;top:53%;width:5%;height:20%;color:#fff}
+.nav-globe{position:absolute;right:6.8%;top:53%;width:5.2%;height:20%;color:#fff}
+.nav svg{width:100%;height:100%}
+.gesture{position:absolute;left:29.2%;bottom:5.1%;width:41.5%;height:1%;min-height:3px;border-radius:999px;background:#a7a7a9}
+.panel{position:absolute;left:3%;right:3%;top:8%;min-height:18%;max-height:28%;overflow:auto;padding:14px;background:#202024;border:1px solid #555;border-radius:18px;z-index:10000;box-shadow:0 8px 30px #000b;display:none}
+.panel.open{display:block}
+.panel-head{display:flex;align-items:center;justify-content:space-between;color:#fff;font-weight:700;margin-bottom:12px}
+.panel-close,.panel-item{background:#38383e;color:#fff;border-radius:10px;padding:9px 12px}
+.panel-grid{display:flex;flex-wrap:wrap;gap:8px}
+.status{position:absolute;left:5%;right:5%;bottom:23%;text-align:center;color:#b9bac2;font-size:clamp(10px,2.5cqw,16px);pointer-events:none}
+@media(prefers-reduced-motion:no-preference){.tool,.key,.bottom-key,.emoji{transition:background .12s ease,transform .12s ease}}
+@media(max-height:520px){.stage{width:min(100vw,91.145833dvh)}}
+</style>
+</head>
+<body>
+<main class="stage" aria-label="NETHA KEYBOARD ULTRA">
+<section class="composer" aria-hidden="true"><div id="typed"></div></section>
+<section class="tools" aria-label="Keyboard toolbar">
+<button class="tool" id="langTool" title="Language"><span class="en">En</span></button>
+<button class="tool" title="Emoji" data-panel="emoji"><span class="glyph">☻</span></button>
+<button class="tool" title="Decorative fonts" data-panel="font"><span class="glyph">𝓐𝒶</span></button>
+<button class="tool" title="Clipboard" data-panel="clipboard"><span class="glyph">▤</span></button>
+<button class="tool" title="Text style" data-panel="style"><span class="glyph">Aa</span></button>
+<button class="tool" title="Keyboard layout" data-panel="layout"><span class="glyph">⌨</span></button>
+<button class="tool" title="Hide toolbar" id="collapseTool"><span class="glyph">⌄</span></button>
+</section>
+<section class="emoji-row" aria-label="Emoji shortcuts">
+<button class="emoji">🥲</button><button class="emoji">🔥</button><button class="emoji">🌪️</button><button class="emoji">🎂</button><button class="emoji">🎬</button><button class="emoji">★</button><button class="emoji">🙂</button><button class="emoji">😒</button><button class="emoji">☹️</button>
+</section>
+<section class="key-row row-one" aria-label="QWERTY row one">
+<button class="key" data-key="Q"><span class="letter">Q</span><span class="sub">1</span></button><button class="key" data-key="W"><span class="letter">W</span><span class="sub">2</span></button><button class="key" data-key="E"><span class="letter">E</span><span class="sub">3</span></button><button class="key" data-key="R"><span class="letter">R</span><span class="sub">4</span></button><button class="key" data-key="T"><span class="letter">T</span><span class="sub">5</span></button><button class="key" data-key="Y"><span class="letter">Y</span><span class="sub">6</span></button><button class="key" data-key="U"><span class="letter">U</span><span class="sub">7</span></button><button class="key" data-key="I"><span class="letter">I</span><span class="sub">8</span></button><button class="key" data-key="O"><span class="letter">O</span><span class="sub">9</span></button><button class="key" data-key="P"><span class="letter">P</span><span class="sub">0</span></button>
+</section>
+<section class="key-row row-two" aria-label="QWERTY row two">
+<button class="key" data-key="A"><span class="letter">A</span><span class="sub">@</span></button><button class="key" data-key="S"><span class="letter">S</span><span class="sub">#</span></button><button class="key" data-key="D"><span class="letter">D</span><span class="sub">$</span></button><button class="key" data-key="F"><span class="letter">F</span><span class="sub">−</span></button><button class="key" data-key="G"><span class="letter">G</span><span class="sub">&amp;</span></button><button class="key" data-key="H"><span class="letter">H</span><span class="sub">-</span></button><button class="key" data-key="J"><span class="letter">J</span><span class="sub">+</span></button><button class="key" data-key="K"><span class="letter">K</span><span class="sub">(</span></button><button class="key" data-key="L"><span class="letter">L</span><span class="sub">)</span></button>
+</section>
+<section class="key-row row-three" aria-label="QWERTY row three">
+<button class="side-key" id="shift" aria-label="Shift"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 7 7 34h13v22h24V34h13L32 7Z"/></svg></button>
+<button class="key" data-key="Z"><span class="letter">Z</span><span class="sub">*</span></button><button class="key" data-key="X"><span class="letter">X</span><span class="sub">"</span></button><button class="key" data-key="C"><span class="letter">C</span><span class="sub">'</span></button><button class="key" data-key="V"><span class="letter">V</span><span class="sub">:</span></button><button class="key" data-key="B"><span class="letter">B</span><span class="sub">;</span></button><button class="key" data-key="N"><span class="letter">N</span><span class="sub">!</span></button><button class="key" data-key="M"><span class="letter">M</span><span class="sub">?</span></button>
+<button class="side-key" id="backspace" aria-label="Backspace"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 12H55V52H23L7 32 23 12Z"/><path d="m32 24 14 16m0-16L32 40"/></svg></button>
+</section>
+<section class="bottom-row" aria-label="Bottom keys">
+<button class="bottom-key num" id="numbers">123</button>
+<button class="bottom-key globe" id="globe" aria-label="Switch language"><span>◎</span></button>
+<button class="bottom-key comma" data-key=",">,</button>
+<button class="bottom-key space" id="space">NETHA</button>
+<button class="bottom-key dot" data-key=".">.</button>
+<button class="bottom-key enter" id="enter" aria-label="Enter">↵</button>
+</section>
+<section class="panel" id="panel" aria-live="polite"><div class="panel-head"><span id="panelTitle">Tools</span><button class="panel-close" id="panelClose">Close</button></div><div class="panel-grid" id="panelGrid"></div></section>
+<div class="status" id="status" aria-live="polite"></div>
+<footer class="nav" aria-label="System navigation preview"><span class="nav-down">⌄</span><span class="nav-globe">◎</span><span class="gesture"></span></footer>
+</main>
+<script>
+"use strict";
+const typed=document.getElementById("typed"),statusEl=document.getElementById("status");
+let output="",currentWord="",isSinhala=false,isCaps=false,isNumber=false,isAZERTY=false,toolbarHidden=false,clipboardItems=[];
+const vowels={a:"",aa:"ා",ae:"ැ",aee:"ෑ",i:"ි",ii:"ී",u:"ු",uu:"ූ",e:"ෙ",ee:"ේ",o:"ො",oo:"ෝ"};
+const independent={a:"අ",aa:"ආ",ae:"ඇ",aee:"ඈ",i:"ඉ",ii:"ඊ",u:"උ",uu:"ඌ",e:"එ",ee:"ඒ",o:"ඔ",oo:"ඕ"};
+const consonants={k:["ක","ක්"],c:["ක","ක්"],g:["ග","ග්"],ch:["ච","ච්"],j:["ජ","ජ්"],t:["ට","ට්"],d:["ඩ","ඩ්"],th:["ත","ත්"],dh:["ද","ද්"],n:["න","න්"],nn:["ණ","ණ්"],p:["ප","ප්"],b:["බ","බ්"],m:["ම","ම්"],y:["ය","ය්"],r:["ර","ර්"],l:["ල","ල්"],w:["ව","ව්"],v:["ව","ව්"],s:["ස","ස්"],sh:["ශ","ශ්"],ssh:["ෂ","ෂ්"],h:["හ","හ්"],f:["ෆ","ෆ්"],q:["ක්","ක්"]};
+const special={prashnaya:"ප්‍රශ්නය",prashna:"ප්‍රශ්න",prasna:"ප්‍රශ්න",amma:"අම්මා",ammaa:"අම්මා",thaththa:"තාත්තා",thaaththa:"තාත්තා",ayiya:"අයියා",kohomada:"කොහොමද",nee:"නේ",nii:"නී",cha:"ච",pra:"ප්‍ර"};
+const rules=Object.assign({},special);
+Object.keys(consonants).forEach(roman=>{const pair=consonants[roman];rules[roman]=pair[1];Object.keys(vowels).forEach(v=>rules[roman+v]=pair[0]+vowels[v]);});
+Object.assign(rules,{pr:"ප්‍ර්",pra:"ප්‍ර",kra:"ක්‍ර",gra:"ග්‍ර",tra:"ත්‍ර",dra:"ද්‍ර",sra:"ස්‍ර",swa:"ස්ව",sri:"ශ්‍රී",nya:"ඤ",ng:"ඟ",nd:"න්ද",mb:"ම්බ"});
+const ruleKeys=Object.keys(rules).sort((a,b)=>b.length-a.length);
+function convertSinhala(word){const s=word.toLowerCase();if(special[s])return special[s];let result="",i=0;while(i<s.length){let hit="";for(const k of ruleKeys){if(s.startsWith(k,i)){hit=k;break;}}if(hit){result+=rules[hit];i+=hit.length;}else{result+=independent[s[i]]||s[i];i++;}}return result;}
+function render(){typed.textContent=output+(isSinhala?convertSinhala(currentWord):currentWord);}
+function commitWord(){if(currentWord){output+=isSinhala?convertSinhala(currentWord):currentWord;currentWord="";}render();}
+function insertText(value){if(isSinhala&&/^[a-z]$/i.test(value)){currentWord+=value.toLowerCase();}else{commitWord();output+=value;}render();}
+function backspace(){if(currentWord)currentWord=currentWord.slice(0,-1);else output=Array.from(output).slice(0,-1).join("");render();}
+function setStatus(message){statusEl.textContent=message;clearTimeout(setStatus.timer);setStatus.timer=setTimeout(()=>statusEl.textContent="",1800);}
+function refreshLetters(){document.querySelectorAll(".key[data-key]").forEach(btn=>{const l=btn.querySelector(".letter");if(l)l.textContent=isCaps&&!isSinhala?btn.dataset.key.toUpperCase():btn.dataset.key;});}
+document.querySelectorAll(".key").forEach(key=>{const pop=document.createElement("span");pop.className="key-popup";pop.textContent=key.dataset.key||"";key.appendChild(pop);key.addEventListener("pointerdown",()=>{pop.textContent=key.dataset.key||"";key.classList.add("popup-active");});["pointerup","pointerleave","pointercancel"].forEach(ev=>key.addEventListener(ev,()=>key.classList.remove("popup-active")));});
+document.querySelectorAll("[data-key]").forEach(btn=>btn.addEventListener("click",()=>{let v=btn.dataset.key;if(isNumber){const map={q:"1",w:"2",e:"3",r:"4",t:"5",y:"6",u:"7",i:"8",o:"9",p:"0",a:"@",s:"#",d:"$",f:"%",g:"&",h:"-",j:"+",k:"(",l:")",z:"*",x:'"',c:"'",v:":",b:";",n:"!",m:"?"};v=map[v.toLowerCase()]||v;}if(isCaps&&!isSinhala&&!isNumber)v=v.toUpperCase();insertText(v);}));
+document.querySelectorAll(".emoji").forEach(b=>b.addEventListener("click",()=>insertText(b.textContent)));
+document.getElementById("space").addEventListener("click",()=>{commitWord();output+=" ";render();});
+document.getElementById("enter").addEventListener("click",()=>{commitWord();output+="\n";render();});
+document.getElementById("backspace").addEventListener("click",backspace);
+document.getElementById("shift").addEventListener("click",()=>{isCaps=!isCaps;document.getElementById("shift").style.color=isCaps?"var(--purple)":"#edf0f8";refreshLetters();});
+function toggleLanguage(){commitWord();isSinhala=!isSinhala;document.querySelector("#langTool .en").textContent=isSinhala?"සිං":"En";document.getElementById("globe").style.color=isSinhala?"var(--purple)":"#ececf3";setStatus(isSinhala?"Sinhala phonetic mode":"English mode");}
+document.getElementById("langTool").addEventListener("click",toggleLanguage);
+document.getElementById("globe").addEventListener("click",toggleLanguage);
+document.getElementById("numbers").addEventListener("click",e=>{isNumber=!isNumber;e.currentTarget.textContent=isNumber?"ABC":"123";e.currentTarget.style.color=isNumber?"var(--purple)":"#ececf3";setStatus(isNumber?"Numbers and symbols":"Letters");});
+const panel=document.getElementById("panel"),panelTitle=document.getElementById("panelTitle"),panelGrid=document.getElementById("panelGrid");
+function openPanel(name){panelGrid.replaceChildren();panel.classList.add("open");const add=(label,fn)=>{const b=document.createElement("button");b.className="panel-item";b.textContent=label;b.addEventListener("click",()=>{fn();panel.classList.remove("open");});panelGrid.appendChild(b);};
+if(name==="emoji"){panelTitle.textContent="Emoji";["😀","😂","🥲","😍","🔥","❤️","👍","🙏","🎂","🎬","😒","🌟","😭","😊","🚀"].forEach(x=>add(x,()=>insertText(x)));}
+if(name==="font"){panelTitle.textContent="Decorative fonts";["Normal font","Bold font","Serif font"].forEach(x=>add(x,()=>setStatus(x+" selected")));}
+if(name==="style"){panelTitle.textContent="Text style";add("UPPERCASE",()=>{commitWord();output=output.toUpperCase();render();});add("lowercase",()=>{commitWord();output=output.toLowerCase();render();});add("Clear text",()=>{output="";currentWord="";render();});add("Copy text",copyText);}
+if(name==="clipboard"){panelTitle.textContent="Clipboard";add("Copy current text",copyText);add("Paste saved item",()=>{if(clipboardItems.length){commitWord();output+=clipboardItems[clipboardItems.length-1];render();}else setStatus("Clipboard is empty");});add("Clear clipboard",()=>{clipboardItems=[];setStatus("Clipboard cleared");});}
+if(name==="layout"){panelTitle.textContent="Keyboard layout";add(isAZERTY?"Switch to QWERTY":"Switch to AZERTY",()=>{isAZERTY=!isAZERTY;applyLayout();setStatus(isAZERTY?"AZERTY layout":"QWERTY layout");});add("Reset QWERTY",()=>{isAZERTY=false;applyLayout();});}}
+function copyText(){commitWord();if(!output){setStatus("Nothing to copy");return;}clipboardItems.push(output);if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(output).then(()=>setStatus("Copied")).catch(()=>setStatus("Saved in keyboard clipboard"));else setStatus("Saved in keyboard clipboard");}
+document.querySelectorAll(".tool[data-panel]").forEach(b=>b.addEventListener("click",()=>openPanel(b.dataset.panel)));
+document.getElementById("panelClose").addEventListener("click",()=>panel.classList.remove("open"));
+document.getElementById("collapseTool").addEventListener("click",()=>{toolbarHidden=!toolbarHidden;document.querySelector(".tools").style.visibility=toolbarHidden?"hidden":"visible";setStatus(toolbarHidden?"Toolbar hidden":"Toolbar shown");});
+function applyLayout(){const rows=[["QWERTYUIOP","AZERTYUIOP"],["ASDFGHJKL","QSDFGHJKLM"],["ZXCVBNM","WXCVBN"]];document.querySelectorAll(".key-row").forEach((row,i)=>{const buttons=row.querySelectorAll(".key");buttons.forEach((btn,j)=>{const c=rows[i][isAZERTY?1:0][j];if(c){btn.dataset.key=c;btn.querySelector(".letter").textContent=isCaps?c.toUpperCase():c;btn.querySelector(".key-popup").textContent=c;}});});}
+function startVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){setStatus("Voice typing is not supported in this browser");return;}const rec=new SR();rec.lang=isSinhala?"si-LK":"en-US";rec.interimResults=false;rec.onresult=e=>{commitWord();output+=e.results[0][0].transcript+" ";render();};rec.onerror=()=>setStatus("Voice input unavailable");rec.start();setStatus("Listening…");}
+document.getElementById("panel").addEventListener("click",e=>e.stopPropagation());
+document.querySelector(".voice")?.addEventListener("click",startVoice);
+document.querySelector(".plus")?.addEventListener("click",()=>openPanel("emoji"));
+render();
+</script>
+</body>
+</html>
