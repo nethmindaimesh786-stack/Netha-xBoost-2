@@ -20,6 +20,8 @@ class NethaKeyboardView(context: Context, private val action: (String, String) -
     private val keyBgAlt = Color.rgb(48, 48, 51)
     private val purple = Color.rgb(163, 92, 255)
     private val letterKeys = mutableListOf<Pair<TextView, String>>()
+    private var languageButton: TextView? = null
+    private var numberButton: TextView? = null
     private var sinhala = false
     private var caps = false
     private var numbers = false
@@ -64,7 +66,9 @@ class NethaKeyboardView(context: Context, private val action: (String, String) -
 
     private fun build() {
         val toolbar = LinearLayout(context).apply { orientation = HORIZONTAL; gravity = Gravity.CENTER }
-        toolbar.addView(tool("En", "language"), LayoutParams(0, dp(42), 1f))
+        val lang = tool("En", "language")
+        languageButton = lang
+        toolbar.addView(lang, LayoutParams(0, dp(42), 1f))
         toolbar.addView(tool("☻", "emoji"), LayoutParams(0, dp(42), 1f))
         toolbar.addView(tool("𝓐", "font"), LayoutParams(0, dp(42), 1f))
         toolbar.addView(tool("▤", "clipboard"), LayoutParams(0, dp(42), 1f))
@@ -126,7 +130,9 @@ class NethaKeyboardView(context: Context, private val action: (String, String) -
     private fun bottomRow(): View = LinearLayout(context).apply {
         orientation = HORIZONTAL
         gravity = Gravity.CENTER
-        addView(specialKey(if (numbers) "ABC" else "?123") { action("numbers", "") }, LayoutParams(0, dp(49), 1.3f).apply { setMargins(dp(2), dp(3), dp(2), dp(3)) })
+        val num = specialKey("?123") { action("numbers", "") }
+        numberButton = num
+        addView(num, LayoutParams(0, dp(49), 1.3f).apply { setMargins(dp(2), dp(3), dp(2), dp(3)) })
         addView(specialKey("🌐") { action("language", "") }, LayoutParams(0, dp(49), 1f).apply { setMargins(dp(2), dp(3), dp(2), dp(3)) })
         addView(specialKey(",") { action("letter", ",") }, LayoutParams(0, dp(49), .65f).apply { setMargins(dp(2), dp(3), dp(2), dp(3)) })
         addView(TextView(context).apply {
@@ -168,8 +174,8 @@ class NethaKeyboardView(context: Context, private val action: (String, String) -
         }
 
     fun setShift(value: Boolean) { caps = value; refreshKeyLabels() }
-    fun setNumbers(value: Boolean) { numbers = value; refreshKeyLabels() }
-    fun setLanguage(value: Boolean) { sinhala = value }
+    fun setNumbers(value: Boolean) { numbers = value; numberButton?.text = if (numbers) "ABC" else "?123"; refreshKeyLabels() }
+    fun setLanguage(value: Boolean) { sinhala = value; languageButton?.text = if (sinhala) "සිං" else "En" }
     fun setLayout(value: Boolean) {
         azerty = value
         val qwerty = "QWERTYUIOPASDFGHJKLZXCVBNM"
