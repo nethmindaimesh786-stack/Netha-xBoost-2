@@ -2,6 +2,7 @@ package com.netha.keyboardultra
 
 object SinhalaPhonetic {
     private val words = mapOf(
+        "a" to "ඇ",
         "ayiya" to "අයිය", "ayiya " to "අයිය ", "ayyaa" to "අයියා",
         "thaaththas" to "තාත්තා", "thaththa" to "තාත්තා", "thaaththa" to "තාත්තා",
         "amma" to "අම්මා", "ammaa" to "අම්මා", "kari ya" to "කැරියා",
