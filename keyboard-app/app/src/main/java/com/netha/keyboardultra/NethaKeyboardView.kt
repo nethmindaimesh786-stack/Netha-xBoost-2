@@ -149,7 +149,6 @@ class NethaKeyboardView(context: Context, private val action: (String, String) -
             background = shape(keyBg, 8)
             isClickable = true
             isFocusable = true
-            setOnClickListener { action("letter", (main.tag as? String ?: char).lowercase()) }
         }
         val main = label(if (caps) char.uppercase() else char, 23f, Color.WHITE, true)\n        main.tag = char
         // Native text remains crisp; key backgrounds stay independent from the RGB glyph styling.
