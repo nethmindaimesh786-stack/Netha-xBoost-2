@@ -65,6 +65,7 @@ button{font:inherit;border:0;outline:0;cursor:pointer;user-select:none;touch-act
 <button class="tool" title="Decorative fonts" data-panel="font"><span class="glyph">𝓐𝒶</span></button>
 <button class="tool" title="Clipboard" data-panel="clipboard"><span class="glyph">▤</span></button>
 <button class="tool" title="Text style" data-panel="style"><span class="glyph">Aa</span></button>
+<button class="tool" title="Voice typing" id="voiceTool"><span class="glyph">🎙</span></button>
 <button class="tool" title="Keyboard layout" data-panel="layout"><span class="glyph">⌨</span></button>
 <button class="tool" title="Hide toolbar" id="collapseTool"><span class="glyph">⌄</span></button>
 </section>
@@ -138,7 +139,7 @@ document.getElementById("collapseTool").addEventListener("click",()=>{toolbarHid
 function applyLayout(){const rows=[["QWERTYUIOP","AZERTYUIOP"],["ASDFGHJKL","QSDFGHJKLM"],["ZXCVBNM","WXCVBN"]];document.querySelectorAll(".key-row").forEach((row,i)=>{const buttons=row.querySelectorAll(".key");buttons.forEach((btn,j)=>{const c=rows[i][isAZERTY?1:0][j];if(c){btn.dataset.key=c;btn.querySelector(".letter").textContent=isCaps?c.toUpperCase():c;btn.querySelector(".key-popup").textContent=c;}});});}
 function startVoice(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){setStatus("Voice typing is not supported in this browser");return;}const rec=new SR();rec.lang=isSinhala?"si-LK":"en-US";rec.interimResults=false;rec.onresult=e=>{commitWord();output+=e.results[0][0].transcript+" ";render();};rec.onerror=()=>setStatus("Voice input unavailable");rec.start();setStatus("Listening…");}
 document.getElementById("panel").addEventListener("click",e=>e.stopPropagation());
-document.querySelector(".voice")?.addEventListener("click",startVoice);
+document.getElementById("voiceTool").addEventListener("click",startVoice);
 document.querySelector(".plus")?.addEventListener("click",()=>openPanel("emoji"));
 render();
 </script>
